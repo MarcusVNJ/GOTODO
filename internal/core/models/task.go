@@ -36,6 +36,16 @@ func NewTask(title, description string, priority int) (*Task, error) {
 	return task, nil
 }
 
+func NewTaskInit(audit Audit, title, desc string, status enums.Status, priority int) *Task {
+	return &Task{
+		Audit:       audit,
+		title:       title,
+		description: desc,
+		status:      status,
+		priority:    priority,
+	}
+}
+
 func (task *Task) validade() error {
 	if err := task.validateTitle(); err != nil {
 		return err
@@ -81,3 +91,8 @@ func (task *Task) Complete() error {
 	task.UpdatedAudit()
 	return nil
 }
+
+func (t *Task) Title() string        { return t.title }
+func (t *Task) Description() string  { return t.description }
+func (t *Task) Status() enums.Status { return t.status }
+func (t *Task) Priority() int        { return t.priority }
