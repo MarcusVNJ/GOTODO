@@ -2,25 +2,20 @@ package usecase
 
 import (
 	"context"
-	"github.com/MarcusVNJ/GOTODO/internal/adapters/mappers"
-	"github.com/MarcusVNJ/GOTODO/internal/adapters/out"
 	"github.com/MarcusVNJ/GOTODO/internal/core/base"
 	"github.com/MarcusVNJ/GOTODO/internal/core/models"
+	"github.com/MarcusVNJ/GOTODO/internal/core/ports"
 )
 
-type REQUEST = models.Task
+type REQUEST = *models.Task
 type RESPONSE = struct{}
-
-type ICreateTaskUC interface {
-	base.IUsecase[REQUEST, RESPONSE]
-}
 
 type CreateTaskUC struct {
 	base.BaseUsecase[REQUEST, RESPONSE]
 	repository repository.TaskRepository
 }
 
-func NewCreateTaskUC(repository repository.TaskRepository) ICreateTaskUC {
+func NewCreateTaskUC(repository repository.TaskRepository) *CreateTaskUC {
 	return &CreateTaskUC{
 		repository: repository,
 	}
@@ -32,12 +27,10 @@ func (usecase *CreateTaskUC) Execute(ctx context.Context, request REQUEST) (RESP
 
 func (usecase *CreateTaskUC) createTask(ctx context.Context, request REQUEST) (RESPONSE, error) {
 
-	task := mappers.DomainToEntity(&request)
-
-	err := usecase.repository.Save(ctx, task)
+	err := usecase.repository.Save(ctx, request)
 	if err != nil {
 		return RESPONSE{}, err
 	}
 
-	return struct{}{}, nil
+	return RESPONSE{}, nil
 }

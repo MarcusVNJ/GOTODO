@@ -9,4 +9,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data_gotodo:/var/lib/postgresql/data
+      - postgres_gotodo:/var/lib/postgresql/data
+
+volumes:
+  postgres_gotodo:

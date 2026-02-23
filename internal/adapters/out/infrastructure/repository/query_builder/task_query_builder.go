@@ -1,8 +1,8 @@
 package task_query_builder
 
 import (
+    "github.com/MarcusVNJ/GOTODO/internal/adapters/out/infrastructure/entity"
     "github.com/MarcusVNJ/GOTODO/internal/core/enums"
-    "github.com/MarcusVNJ/GOTODO/internal/infrastructure/entity"
     sq "github.com/Masterminds/squirrel"
     "time"
 )
@@ -18,7 +18,7 @@ func NewTaskQueryBuilder() *TaskQueryBuilder {
 }
 
 func (query_builder *TaskQueryBuilder) QueryInsert(entity entity.TaskEntity) (string, []interface{}, error) {
-    return query_builder.psql.Insert("task").
+    return query_builder.psql.Insert("tasks").
         Columns("id", "title", "description", "status", "priority", "created_at", "updated_at", "deleted_at").
         Values(
             entity.ID,
@@ -40,7 +40,7 @@ func (query_builder *TaskQueryBuilder) QueryFindById(id string) (string, []inter
 }
 
 func (query_builder *TaskQueryBuilder) QueryFindAllTasks(statusFilter string, minPriority int) (string, []interface{}, error) {
-    queryBuilder := query_builder.psql.Select("*").From("Task")
+    queryBuilder := query_builder.psql.Select("*").From("tasks")
 
     if statusFilter != "" {
         queryBuilder.Where(sq.Eq{"status": statusFilter})
@@ -55,7 +55,7 @@ func (query_builder *TaskQueryBuilder) QueryFindAllTasks(statusFilter string, mi
 }
 
 func (query_builder *TaskQueryBuilder) QueryUpdate(entity entity.TaskEntity) (string, []interface{}, error) {
-    return query_builder.psql.Update("task").
+    return query_builder.psql.Update("tasks").
         Set("title", entity.Title).
         Set("description", entity.Description).
         Set("status", entity.Status).
@@ -67,7 +67,7 @@ func (query_builder *TaskQueryBuilder) QueryUpdate(entity entity.TaskEntity) (st
 }
 
 func (query_builder *TaskQueryBuilder) QueryDelete(id string) (string, []interface{}, error) {
-    return query_builder.psql.Update("task").
+    return query_builder.psql.Update("tasks").
         Set("deleted_at", time.Now()).
         Where(sq.Eq{"id": id}).
         ToSql()

@@ -2,44 +2,52 @@ package repository_impl
 
 import (
 	"context"
-	"database/sql"
 	"errors"
-	repository "github.com/MarcusVNJ/GOTODO/internal/adapters/out"
-	"github.com/MarcusVNJ/GOTODO/internal/infrastructure/entity"
-	"github.com/MarcusVNJ/GOTODO/internal/infrastructure/repository/query_builder"
-	"github.com/MarcusVNJ/GOTODO/internal/adapters/mappers"
-	"github.com/MarcusVNJ/GOTODO/internal/core/enums"
+    "github.com/MarcusVNJ/GOTODO/internal/adapters/out/infrastructure/entity"
+    "github.com/MarcusVNJ/GOTODO/internal/adapters/out/infrastructure/mappers"
+    "github.com/MarcusVNJ/GOTODO/internal/adapters/out/infrastructure/repository/query_builder"
+    "github.com/MarcusVNJ/GOTODO/internal/core/enums"
 	"github.com/MarcusVNJ/GOTODO/internal/core/models"
+    "github.com/MarcusVNJ/GOTODO/internal/core/ports"
+    "github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rs/xid"
-	"log"
+	"github.com/samber/oops"
 )
 
 var (
-	ErrTaskNotFound = errors.New("task not found")
+	ErrTaskNotFound = errors.New("task not found") //TODO: esse ë um erro de negocio, o usecase q tem q lidar com isso
 )
 
 type PostgresTaskRepository struct {
-	db *sql.DB
+	db      *pgxpool.Pool
 	builder *task_query_builder.TaskQueryBuilder
 }
 
-func NewPostgresTaskRepository(db *sql.DB) repository.TaskRepository {
+func NewPostgresTaskRepository(db *pgxpool.Pool) repository.TaskRepository {
 	return &PostgresTaskRepository{
-		db: db,
+		db:      db,
 		builder: task_query_builder.NewTaskQueryBuilder(),
-		}
+	}
 }
 
-func (repository *PostgresTaskRepository) Save(context context.Context, task entity.TaskEntity) error {
+func (repository *PostgresTaskRepository) Save(context context.Context, request *models.Task) error {
+	task := mappers.DomainToEntity(request)
 
 	query, args, err := repository.builder.QueryInsert(task)
 	if err != nil {
-		return err
+		return oops.
+			In("PostgresTaskRepository").
+			Tags("database", "sql").
+			Wrapf(err, "falha crítica ao tentar inserir task no banco")
 	}
 
-	_, err = repository.db.ExecContext(context, query, args...)
+	_, err = repository.db.Exec(context, query, args...)
 	if err != nil {
-		return err
+		return oops.
+			In("PostgresTaskRepository").
+			Tags("database", "postgres").
+			Wrapf(err, "falha crítica ao tentar inserir task no banco")
 	}
 
 	return nil
@@ -52,7 +60,7 @@ func (repository *PostgresTaskRepository) FindByID(context context.Context, id x
 		return nil, err
 	}
 
-	taskRow := repository.db.QueryRowContext(context, query, args...)
+	taskRow := repository.db.QueryRow(context, query, args...)
 
 	return scanTask(taskRow)
 }
@@ -63,16 +71,12 @@ func (repository *PostgresTaskRepository) FindAll(context context.Context, statu
 		return nil, err
 	}
 
-	tasksRows, err := repository.db.QueryContext(context, query, args...)
+	tasksRows, err := repository.db.Query(context, query, args...)
 	if err != nil {
 		return nil, err
 	}
 
-	defer func() {
-	    if err := tasksRows.Close(); err != nil {
-	        log.Printf("erro ao fechar rows: %v", err)
-	    }
-	}()
+	defer tasksRows.Close()
 
 	tasksModel, err := scanTasks(tasksRows)
 	if err != nil {
@@ -90,7 +94,7 @@ func (repository *PostgresTaskRepository) Update(context context.Context, task e
 		return err
 	}
 
-	_, err = repository.db.ExecContext(context, query, args...)
+	_, err = repository.db.Exec(context, query, args...)
 	if err != nil {
 		return err
 	}
@@ -105,7 +109,7 @@ func (repository *PostgresTaskRepository) Delete(context context.Context, id xid
 		return err
 	}
 
-	_, err = repository.db.ExecContext(context, query, args...)
+	_, err = repository.db.Exec(context, query, args...)
 	if err != nil {
 		return err
 	}
@@ -120,16 +124,12 @@ func (repository *PostgresTaskRepository) FindByStatus(context context.Context, 
 		return nil, err
 	}
 
-	tasksRows, err := repository.db.QueryContext(context, query, args...)
+	tasksRows, err := repository.db.Query(context, query, args...)
 	if err != nil {
 		return nil, err
 	}
 
-	defer func() {
-	    if err := tasksRows.Close(); err != nil {
-	        log.Printf("erro ao fechar rows: %v", err)
-	    }
-	}()
+	defer tasksRows.Close()
 
 	tasksModel, err := scanTasks(tasksRows)
 	if err != nil {
@@ -139,7 +139,7 @@ func (repository *PostgresTaskRepository) FindByStatus(context context.Context, 
 	return tasksModel, nil
 }
 
-func scanTasks(tasksRows *sql.Rows) ([]*models.Task, error) {
+func scanTasks(tasksRows pgx.Rows) ([]*models.Task, error) {
 	var tasksModel []*models.Task
 
 	for tasksRows.Next() {
@@ -151,7 +151,7 @@ func scanTasks(tasksRows *sql.Rows) ([]*models.Task, error) {
 		)
 
 		if err != nil {
-			return nil, err
+			return nil, err // TODO: lembra da colocar o oops aqui
 		}
 
 		taskDomain, err := mappers.EntityToDomain(&taskEntity)
@@ -169,7 +169,7 @@ func scanTasks(tasksRows *sql.Rows) ([]*models.Task, error) {
 	return tasksModel, nil
 }
 
-func scanTask(taskRow *sql.Row) (*models.Task, error) {
+func scanTask(taskRow pgx.Row) (*models.Task, error) {
 
 	var taskEntity entity.TaskEntity
 
@@ -178,7 +178,7 @@ func scanTask(taskRow *sql.Row) (*models.Task, error) {
 		&taskEntity.Priority, &taskEntity.CreatedAt, &taskEntity.UpdatedAt, &taskEntity.DeletedAt,
 	)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrTaskNotFound
 		}
 		return nil, err

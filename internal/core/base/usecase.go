@@ -1,6 +1,9 @@
 package base
 
-import "context"
+import (
+	"context"
+	"fmt"
+)
 
 type IUsecase[REQ any, RES any] interface {
 	Execute(ctx context.Context, req REQ) (RES, error)
@@ -10,13 +13,13 @@ type BaseUsecase[REQ any, RES any] struct{}
 
 func (base *BaseUsecase[REQUEST, RESPONSE]) Call(
 	ctx context.Context,
-	req REQUEST,
+	request REQUEST,
 	businessLogic func(context.Context, REQUEST) (RESPONSE, error),
 ) (RESPONSE, error) {
 
-	response, err := businessLogic(ctx, req)
-	if err != nil { //TODO: adicione aqui dps um metodo handler para identificar ou montar exceptions mapeadas e não mapeadas
-		return response, err
+	response, err := businessLogic(ctx, request)
+	if err != nil {
+		return response, fmt.Errorf("[Payload do Usecase: %+v]: %w", request, err)
 	}
 
 	return response, nil
