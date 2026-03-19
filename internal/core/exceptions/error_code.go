@@ -1,12 +1,7 @@
 package exceptions
 
-type ErrorCode string
-
-const (
-	CodeInvalidData ErrorCode = "INVALID_DATA"
-	CodeConflict    ErrorCode = "CONFLICT"
-	CodeNotFound    ErrorCode = "NOT_FOUND"
-	InternalServerError = "INTERNAL_ERROR"
-
-
-)
+type Exception interface {
+	Code() int
+	Message() string
+	HTTPStatus() int
+}

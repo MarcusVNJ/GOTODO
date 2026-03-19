@@ -13,6 +13,10 @@ func (chi *AppRouter) Get(pattern string, handler middlewares.ResourceHandler) {
 	chi.Router.Get(pattern, middlewares.ExceptionHandler(handler))
 }
 
-func (chi *AppRouter) Post(pattern string, handler middlewares.ResourceHandler)  {
+func (chi *AppRouter) Post(pattern string, handler middlewares.ResourceHandler) {
 	chi.Router.Post(pattern, middlewares.ExceptionHandler(handler))
+}
+
+func (chi *AppRouter) Delete(pattern string, handler middlewares.ResourceHandler) {
+	chi.Router.Delete(pattern, middlewares.ExceptionHandler(handler))
 }

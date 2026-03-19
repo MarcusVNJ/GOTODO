@@ -3,13 +3,13 @@ package repository_impl
 import (
 	"context"
 	"errors"
-    "github.com/MarcusVNJ/GOTODO/internal/adapters/out/infrastructure/entity"
-    "github.com/MarcusVNJ/GOTODO/internal/adapters/out/infrastructure/mappers"
-    "github.com/MarcusVNJ/GOTODO/internal/adapters/out/infrastructure/repository/query_builder"
-    "github.com/MarcusVNJ/GOTODO/internal/core/enums"
+	"github.com/MarcusVNJ/GOTODO/internal/adapters/out/infrastructure/entity"
+	"github.com/MarcusVNJ/GOTODO/internal/adapters/out/infrastructure/mappers"
+	"github.com/MarcusVNJ/GOTODO/internal/adapters/out/infrastructure/repository/query_builder"
+	"github.com/MarcusVNJ/GOTODO/internal/core/enums"
 	"github.com/MarcusVNJ/GOTODO/internal/core/models"
-    "github.com/MarcusVNJ/GOTODO/internal/core/ports"
-    "github.com/jackc/pgx/v5"
+	"github.com/MarcusVNJ/GOTODO/internal/core/ports"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rs/xid"
 	"github.com/samber/oops"
@@ -51,6 +51,29 @@ func (repository *PostgresTaskRepository) Save(context context.Context, request 
 	}
 
 	return nil
+}
+
+func (repository *PostgresTaskRepository) ExistByID(context context.Context, id string) (bool, error) {
+	query, args, err := repository.builder.QueryExistsById(id)
+	if err != nil {
+		return false, oops.
+			In("PostgresTaskRepository").
+			Tags("database", "postgres").
+			Wrapf(err, "falha crítica ao tentar criar o sql de verificação se o usurio existe ou não")
+	}
+	var exist int
+
+	err = repository.db.QueryRow(context, query, args).Scan(&exist)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return false, nil
+		}
+		return false, oops.
+			In("PostgresTaskRepository").
+			Tags("database", "postgres").
+			Wrapf(err, "falha crítica ao tentar executar o sql de verificação se o usurio existe ou não")
+	}
+	return true, nil
 }
 
 func (repository *PostgresTaskRepository) FindByID(context context.Context, id xid.ID) (*models.Task, error) {

@@ -1,8 +1,9 @@
 package models
 
 import (
-	"errors"
 	"github.com/MarcusVNJ/GOTODO/internal/core/enums"
+	"github.com/MarcusVNJ/GOTODO/internal/core/exceptions"
+	"github.com/MarcusVNJ/GOTODO/internal/core/exceptions/codes"
 )
 
 type Task struct {
@@ -12,13 +13,6 @@ type Task struct {
 	status      enums.Status
 	priority    int
 }
-
-var (
-	ErrTaskTitleEmpty  = errors.New("task title cannot be empty")
-	ErrTaskAlreadyDone = errors.New("task is already completed")
-	ErrTaskInitDone    = errors.New("task cannot start with a completed state")
-	ErrInvalidPriority = errors.New("priority must be between 1 and 5")
-)
 
 func NewTask(title, description string, priority int) (*Task, error) {
 	task := &Task{
@@ -56,28 +50,28 @@ func (task *Task) validade() error {
 	}
 
 	if err := task.verifyStatusIsCompleted(); err != nil {
-		return ErrTaskInitDone
+		return exceptions.NewBusinessException(codes.TaskInitDone, nil)
 	}
 	return nil
 }
 
 func (task *Task) validateTitle() error {
 	if task.title == "" {
-		return ErrTaskTitleEmpty
+		return exceptions.NewBusinessException(codes.TaskTitleEmpty, nil)
 	}
 	return nil
 }
 
 func (task *Task) validatePriority() error {
 	if task.priority < 1 || task.priority > 5 {
-		return ErrInvalidPriority
+		return exceptions.NewBusinessException(codes.InvalidPriority, nil)
 	}
 	return nil
 }
 
 func (task *Task) verifyStatusIsCompleted() error {
 	if task.status == enums.Completed {
-		return ErrTaskAlreadyDone
+		return exceptions.NewBusinessException(codes.TaskAlreadyDone, nil)
 	}
 	return nil
 }
@@ -92,7 +86,7 @@ func (task *Task) Complete() error {
 	return nil
 }
 
-func (t *Task) Title() string        { return t.title }
-func (t *Task) Description() string  { return t.description }
-func (t *Task) Status() enums.Status { return t.status }
-func (t *Task) Priority() int        { return t.priority }
+func (task *Task) Title() string        { return task.title }
+func (task *Task) Description() string  { return task.description }
+func (task *Task) Status() enums.Status { return task.status }
+func (task *Task) Priority() int        { return task.priority }

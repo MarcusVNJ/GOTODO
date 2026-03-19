@@ -5,10 +5,6 @@ import (
 	"fmt"
 )
 
-type IUsecase[REQ any, RES any] interface {
-	Execute(ctx context.Context, req REQ) (RES, error)
-}
-
 type BaseUsecase[REQ any, RES any] struct{}
 
 func (base *BaseUsecase[REQUEST, RESPONSE]) Call(
