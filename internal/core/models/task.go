@@ -50,28 +50,28 @@ func (task *Task) validade() error {
 	}
 
 	if err := task.verifyStatusIsCompleted(); err != nil {
-		return exceptions.NewBusinessException(codes.TaskInitDone, nil)
+		return exceptions.NewBusinessException(codes.TaskInitDone)
 	}
 	return nil
 }
 
 func (task *Task) validateTitle() error {
 	if task.title == "" {
-		return exceptions.NewBusinessException(codes.TaskTitleEmpty, nil)
+		return exceptions.NewBusinessException(codes.TaskTitleEmpty)
 	}
 	return nil
 }
 
 func (task *Task) validatePriority() error {
 	if task.priority < 1 || task.priority > 5 {
-		return exceptions.NewBusinessException(codes.InvalidPriority, nil)
+		return exceptions.NewBusinessException(codes.InvalidPriority)
 	}
 	return nil
 }
 
 func (task *Task) verifyStatusIsCompleted() error {
 	if task.status == enums.Completed {
-		return exceptions.NewBusinessException(codes.TaskAlreadyDone, nil)
+		return exceptions.NewBusinessException(codes.TaskAlreadyDone)
 	}
 	return nil
 }

@@ -4,6 +4,8 @@ import (
     "encoding/json"
     "errors"
     "fmt"
+    "github.com/MarcusVNJ/GOTODO/internal/core/exceptions/codes"
+    "github.com/samber/oops"
     "log/slog"
     "net/http"
 
@@ -21,15 +23,16 @@ func ExceptionHandler(handler ResourceHandler) http.HandlerFunc {
         }
 
         var businessErr *exceptions.BusinessException
-        var unexpectedErr *exceptions.UnexpectedException
+        var oopsErr *oops.OopsError
 
         if errors.As(err, &businessErr) {
             businessErrorHandler(businessErr, w)
             return
         }
 
-        if errors.As(err, &unexpectedErr) {
-            unexpectedErrorHandler(unexpectedErr, w, r)
+        if errors.As(err, &oopsErr) {
+            unexpectedError := exceptions.NewUnexpectedException(codes.UnexpectedError, oopsErr)
+            unexpectedErrorHandler(unexpectedError, w, r)
             return
         }
 
@@ -37,25 +40,25 @@ func ExceptionHandler(handler ResourceHandler) http.HandlerFunc {
     }
 }
 
-func businessErrorHandler(err *exceptions.BusinessException, response http.ResponseWriter) {
-    response.Header().Set("Content-Type", "application/json")
-    response.WriteHeader(err.HTTPStatus)
+func businessErrorHandler(err *exceptions.BusinessException, w http.ResponseWriter) {
+    w.Header().Set("Content-Type", "application/json")
+    w.WriteHeader(err.HTTPStatus)
 
-    json.NewEncoder(response).Encode(err)
+    json.NewEncoder(w).Encode(err)
 }
 
-func unexpectedErrorHandler(err *exceptions.UnexpectedException, response http.ResponseWriter, request *http.Request) {
-    slog.ErrorContext(request.Context(), "Erro interno (UnexpectedException)",
-        slog.String("method", request.Method),
-        slog.String("path", request.URL.Path),
+func unexpectedErrorHandler(err *exceptions.UnexpectedException, w http.ResponseWriter, r *http.Request) {
+    slog.ErrorContext(r.Context(), "Erro interno (UnexpectedException)",
+        slog.String("method", r.Method),
+        slog.String("path", r.URL.Path),
         slog.String("error_msg", err.Message),
         slog.String("stack_trace", fmt.Sprintf("%+v", err.Details)),
     )
     // Aqui você pode disparar um alerta para algum sistema de rastreamento de erros.
-    response.Header().Set("Content-Type", "application/json")
-    response.WriteHeader(err.Code)
+    w.Header().Set("Content-Type", "application/json")
+    w.WriteHeader(err.Code)
 
-    json.NewEncoder(response).Encode(err)
+    json.NewEncoder(w).Encode(err)
 }
 
 func criticalUnmappedErrorHandler(err error, response http.ResponseWriter, request *http.Request) {

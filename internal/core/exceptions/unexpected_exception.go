@@ -1,6 +1,9 @@
 package exceptions
 
-import "net/http"
+import (
+	"github.com/samber/oops"
+	"net/http"
+)
 
 type UnexpectedException struct {
 	Code    int    `json:"code"`
@@ -8,7 +11,7 @@ type UnexpectedException struct {
 	Details any    `json:"-"`
 }
 
-func NewUnexpectedException(err Exception, details error) *UnexpectedException {
+func NewUnexpectedException(err Exception, details *oops.OopsError) *UnexpectedException {
 	code := err.HTTPStatus()
 	if code == 0 {
 		code = http.StatusInternalServerError

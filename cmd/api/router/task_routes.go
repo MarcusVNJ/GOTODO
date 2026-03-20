@@ -16,7 +16,7 @@ func MakeTaskRoutes(db *pgxpool.Pool) http.Handler {
 
 	//UseCases
 	saveTaskUsecase := usecase.NewCreateTaskUC(taskRepository)
-	deleteTaskUsecase := usecase.NewDeleteTaslUC(taskRepository)
+	deleteTaskUsecase := usecase.NewDeleteTaskUC(taskRepository)
 
 	//Resources
 	resourceTaskSave := handlers.NewCreateTaskResource(saveTaskUsecase)

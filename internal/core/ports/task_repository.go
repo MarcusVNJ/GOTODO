@@ -14,6 +14,6 @@ type TaskRepository interface {
 	ExistByID(context context.Context, id string) (bool, error)
 	FindAll(context context.Context, statusFilter string, minPriority int) ([]*models.Task, error)
 	Update(context context.Context, task entity.TaskEntity) error
-	Delete(context context.Context, id xid.ID) error
+	Delete(context context.Context, id string) error
 	FindByStatus(context context.Context, status enums.Status) ([]*models.Task, error)
 }

@@ -4,6 +4,7 @@ import (
     "encoding/json"
     "github.com/MarcusVNJ/GOTODO/internal/adapters/in/http/dto"
     "github.com/MarcusVNJ/GOTODO/internal/core/exceptions"
+    "github.com/MarcusVNJ/GOTODO/internal/core/exceptions/codes"
     "github.com/MarcusVNJ/GOTODO/internal/core/models"
     "github.com/MarcusVNJ/GOTODO/internal/core/usecase"
     "net/http"
@@ -23,7 +24,7 @@ func (handler *CreateTaskResource) Handler(w http.ResponseWriter, r *http.Reques
 
     var requestDto dto.CreateTaskRequestDTO
     if err := json.NewDecoder(r.Body).Decode(&requestDto); err != nil {
-        return exceptions.NewBusinessException("JSON inválido", err.Error(), exceptions.UnprocessableEntity)
+        return exceptions.NewBusinessException(codes.UnprocessableEntity)
     }
 
     task, err := dto.TaskToModel(requestDto)

@@ -7,16 +7,14 @@ import (
 	"github.com/MarcusVNJ/GOTODO/internal/adapters/out/infrastructure/mappers"
 	"github.com/MarcusVNJ/GOTODO/internal/adapters/out/infrastructure/repository/query_builder"
 	"github.com/MarcusVNJ/GOTODO/internal/core/enums"
+	"github.com/MarcusVNJ/GOTODO/internal/core/exceptions"
+	"github.com/MarcusVNJ/GOTODO/internal/core/exceptions/codes"
 	"github.com/MarcusVNJ/GOTODO/internal/core/models"
 	"github.com/MarcusVNJ/GOTODO/internal/core/ports"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rs/xid"
 	"github.com/samber/oops"
-)
-
-var (
-	ErrTaskNotFound = errors.New("task not found") //TODO: esse ë um erro de negocio, o usecase q tem q lidar com isso
 )
 
 type PostgresTaskRepository struct {
@@ -59,7 +57,7 @@ func (repository *PostgresTaskRepository) ExistByID(context context.Context, id 
 		return false, oops.
 			In("PostgresTaskRepository").
 			Tags("database", "postgres").
-			Wrapf(err, "falha crítica ao tentar criar o sql de verificação se o usurio existe ou não")
+			Wrapf(err, "falha crítica ao tentar criar o sql de verificação se existe ou não uma task")
 	}
 	var exist int
 
@@ -71,7 +69,7 @@ func (repository *PostgresTaskRepository) ExistByID(context context.Context, id 
 		return false, oops.
 			In("PostgresTaskRepository").
 			Tags("database", "postgres").
-			Wrapf(err, "falha crítica ao tentar executar o sql de verificação se o usurio existe ou não")
+			Wrapf(err, "falha crítica ao tentar executar o sql de verificação se existe ou não uma task")
 	}
 	return true, nil
 }
@@ -125,16 +123,22 @@ func (repository *PostgresTaskRepository) Update(context context.Context, task e
 	return nil
 }
 
-func (repository *PostgresTaskRepository) Delete(context context.Context, id xid.ID) error {
+func (repository *PostgresTaskRepository) Delete(context context.Context, id string) error {
 
-	query, args, err := repository.builder.QueryDelete(id.String())
+	query, args, err := repository.builder.QueryDelete(id)
 	if err != nil {
-		return err
+		return oops.
+			In("PostgresTaskRepository").
+			Tags("database", "postgres").
+			Wrapf(err, "falha crítica ao tentar criar o sql de exclusão de uma task")
 	}
 
 	_, err = repository.db.Exec(context, query, args...)
 	if err != nil {
-		return err
+		return oops.
+			In("PostgresTaskRepository").
+			Tags("database", "postgres").
+			Wrapf(err, "falha crítica ao tentar executar o sql de exclusão de uma task")
 	}
 
 	return nil
@@ -202,7 +206,7 @@ func scanTask(taskRow pgx.Row) (*models.Task, error) {
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, ErrTaskNotFound
+			return nil, exceptions.NewBusinessException(codes.TaskNotFound)
 		}
 		return nil, err
 	}

@@ -1,11 +1,15 @@
 GOTODO - API de Gestão de Tarefas (Kanban)
 
-Este projeto foi construído com o propósito de demonstrar conhecimentos avançados na linguagem Go (Golang), aplicando os princípios rigorosos da Arquitetura Hexagonal (Ports and Adapters) e diversas técnicas modernas de Engenharia de Software.
+Este projeto foi construído com o propósito de demonstrar conhecimentos avançados na linguagem Go (Golang), aplicando os
+princípios rigorosos da Arquitetura Hexagonal (Ports and Adapters) e diversas técnicas modernas de Engenharia de
+Software.
 
-O domínio principal da aplicação é um sistema de gerenciamento de tarefas baseado no fluxo Kanban, suportando controle de prioridades, auditoria e transições rigorosas de estado.
+O domínio principal da aplicação é um sistema de gerenciamento de tarefas baseado no fluxo Kanban, suportando controle
+de prioridades, auditoria e transições rigorosas de estado.
 📚 Documentação do Projeto
 
-Para manter o código limpo e o time alinhado, documentamos nossas decisões técnicas e fundamentos. Se você é novo no projeto, comece por aqui:
+Para manter o código limpo e o time alinhado, documentamos nossas decisões técnicas e fundamentos. Se você é novo no
+projeto, comece por aqui:
 
     🚀 Guia de Onboarding: Leitura obrigatória. Explica os fundamentos de memória do Go (Stack vs Heap) e os padrões específicos de fluxo e injeção de dependências do nosso código.
 
@@ -32,13 +36,14 @@ Para manter o código limpo e o time alinhado, documentamos nossas decisões té
     Migrations: golang-migrate/migrate para versionamento do esquema de banco de dados.
 
 🚀 Como executar o projeto localmente
+
 1. Pré-requisitos
 
-    Go instalado (versão 1.21+)
+   Go instalado (versão 1.21+)
 
-    Instância do PostgreSQL rodando localmente (ou via Docker)
+   Instância do PostgreSQL rodando localmente (ou via Docker)
 
-    golang-migrate CLI instalada.
+   golang-migrate CLI instalada.
 
 2. Configuração do Ambiente
 
@@ -47,9 +52,10 @@ ENVIRONMENT=development
 PORT=8080
 DATABASE_URL=postgres://seu_user:sua_senha@localhost:5432/todo_db?sslmode=disable
 
-
 ### 3. Migrações de Banco de Dados
+
 Antes de iniciar a aplicação, crie o esquema do banco de dados executando as migrations:
+
 ```bash
 migrate -database "postgres://seu_user:sua_senha@localhost:5432/todo_db?sslmode=disable" -path migrations up
 
