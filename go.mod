@@ -1,14 +1,14 @@
 module github.com/MarcusVNJ/GOTODO
 
-go 1.25.7
+go 1.26.1
 
 require (
 	github.com/Masterminds/squirrel v1.5.4
 	github.com/go-chi/chi/v5 v5.2.5
-	github.com/jackc/pgx/v5 v5.8.0
+	github.com/jackc/pgx/v5 v5.9.1
 	github.com/joho/godotenv v1.5.1
 	github.com/kelseyhightower/envconfig v1.4.0
-	github.com/lib/pq v1.11.2
+	github.com/lib/pq v1.12.0
 	github.com/rs/xid v1.6.0
 	github.com/samber/oops v1.21.0
 )

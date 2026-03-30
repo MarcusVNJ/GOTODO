@@ -3,13 +3,11 @@ package mappers
 import (
 	"github.com/MarcusVNJ/GOTODO/internal/adapters/out/infrastructure/entity"
 	"github.com/MarcusVNJ/GOTODO/internal/core/models"
-	"github.com/rs/xid"
 )
-
 
 func DomainToEntity(task *models.Task) entity.TaskEntity {
 	return entity.TaskEntity{
-		ID:          task.ID().String(),
+		ID:          task.ID(),
 		Title:       task.Title(),
 		Description: task.Description(),
 		Status:      task.Status(),
@@ -20,13 +18,9 @@ func DomainToEntity(task *models.Task) entity.TaskEntity {
 	}
 }
 
-func EntityToDomain(entity *entity.TaskEntity) (*models.Task, error) {
-	id, err := xid.FromString(entity.ID)
-	if err!= nil {
-		return nil, err
-	}
+func EntityToDomain(entity *entity.TaskEntity) *models.Task {
 
-	audit := models.NewAuditInit(id, entity.CreatedAt, entity.UpdatedAt, entity.DeletedAt)
+	audit := models.NewAuditInit(entity.ID, entity.CreatedAt, entity.UpdatedAt, entity.DeletedAt)
 
 	return models.NewTaskInit(
 		audit,
@@ -34,5 +28,5 @@ func EntityToDomain(entity *entity.TaskEntity) (*models.Task, error) {
 		entity.Description,
 		entity.Status,
 		entity.Priority,
-	), nil
+	)
 }

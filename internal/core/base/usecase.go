@@ -5,9 +5,9 @@ import (
 	"fmt"
 )
 
-type BaseUsecase[REQ any, RES any] struct{}
+type Usecase[REQ any, RES any] struct{}
 
-func (base *BaseUsecase[REQUEST, RESPONSE]) Call(
+func (base *Usecase[REQUEST, RESPONSE]) Call(
 	ctx context.Context,
 	request REQUEST,
 	businessLogic func(context.Context, REQUEST) (RESPONSE, error),

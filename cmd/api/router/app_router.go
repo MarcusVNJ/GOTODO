@@ -20,3 +20,11 @@ func (chi *AppRouter) Post(pattern string, handler middlewares.ResourceHandler) 
 func (chi *AppRouter) Delete(pattern string, handler middlewares.ResourceHandler) {
 	chi.Router.Delete(pattern, middlewares.ExceptionHandler(handler))
 }
+
+func (chi *AppRouter) Put(pattern string, handler middlewares.ResourceHandler) {
+	chi.Router.Put(pattern, middlewares.ExceptionHandler(handler))
+}
+
+func (chi *AppRouter) Patch(pattern string, handler middlewares.ResourceHandler) {
+	chi.Router.Patch(pattern, middlewares.ExceptionHandler(handler))
+}

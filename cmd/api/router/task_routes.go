@@ -17,10 +17,14 @@ func MakeTaskRoutes(db *pgxpool.Pool) http.Handler {
 	//UseCases
 	saveTaskUsecase := usecase.NewCreateTaskUC(taskRepository)
 	deleteTaskUsecase := usecase.NewDeleteTaskUC(taskRepository)
+	getTaskUsecase := usecase.NewGetTaskByIdUC(taskRepository)
+	updateTaskUsecase := usecase.NewUpdateTaskUC(taskRepository)
 
 	//Resources
 	resourceTaskSave := handlers.NewCreateTaskResource(saveTaskUsecase)
 	resourceTaskDelete := handlers.NewDeleteTaskResource(deleteTaskUsecase)
+	resourceGetTask := handlers.NewGetTaskByIdResource(getTaskUsecase)
+	resourceUpdateTask := handlers.NewUpdateTaskResource(updateTaskUsecase)
 
 	router := chi.NewRouter()
 
@@ -28,6 +32,8 @@ func MakeTaskRoutes(db *pgxpool.Pool) http.Handler {
 
 	app.Post("/task", resourceTaskSave.Handler)
 	app.Delete("/task/{id}", resourceTaskDelete.Handler)
+	app.Get("/task/{id}", resourceGetTask.Handler)
+	app.Put("/task", resourceUpdateTask.Handler)
 
 	return router
 }

@@ -13,7 +13,6 @@ import (
 	"github.com/MarcusVNJ/GOTODO/internal/core/ports"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/rs/xid"
 	"github.com/samber/oops"
 )
 
@@ -29,10 +28,10 @@ func NewPostgresTaskRepository(db *pgxpool.Pool) repository.TaskRepository {
 	}
 }
 
-func (repository *PostgresTaskRepository) Save(context context.Context, request *models.Task) error {
-	task := mappers.DomainToEntity(request)
+func (repository *PostgresTaskRepository) Save(context context.Context, task *models.Task) error {
+	taskEntity := mappers.DomainToEntity(task)
 
-	query, args, err := repository.builder.QueryInsert(task)
+	query, args, err := repository.builder.QueryInsert(taskEntity)
 	if err != nil {
 		return oops.
 			In("PostgresTaskRepository").
@@ -74,11 +73,14 @@ func (repository *PostgresTaskRepository) ExistByID(context context.Context, id 
 	return true, nil
 }
 
-func (repository *PostgresTaskRepository) FindByID(context context.Context, id xid.ID) (*models.Task, error) {
+func (repository *PostgresTaskRepository) FindByID(context context.Context, id string) (*models.Task, error) {
 
-	query, args, err := repository.builder.QueryFindById(id.String())
+	query, args, err := repository.builder.QueryFindById(id)
 	if err != nil {
-		return nil, err
+		return nil, oops.
+			In("PostgresTaskRepository").
+			Tags("database", "postgres").
+			Wrapf(err, "falha crítica ao tentar criar sql de busca de task")
 	}
 
 	taskRow := repository.db.QueryRow(context, query, args...)
@@ -108,9 +110,10 @@ func (repository *PostgresTaskRepository) FindAll(context context.Context, statu
 
 }
 
-func (repository *PostgresTaskRepository) Update(context context.Context, task entity.TaskEntity) error {
+func (repository *PostgresTaskRepository) Update(context context.Context, task *models.Task) error {
+	taskEntity := mappers.DomainToEntity(task)
 
-	query, args, err := repository.builder.QueryUpdate(task)
+	query, args, err := repository.builder.QueryUpdate(taskEntity)
 	if err != nil {
 		return err
 	}
@@ -178,13 +181,13 @@ func scanTasks(tasksRows pgx.Rows) ([]*models.Task, error) {
 		)
 
 		if err != nil {
-			return nil, err // TODO: lembra da colocar o oops aqui
+			return nil, oops.
+				In("PostgresTaskRepository").
+				Tags("database", "postgres").
+				Wrapf(err, "falha crítica ao tentar tyransformar a task em uma entidade")
 		}
 
-		taskDomain, err := mappers.EntityToDomain(&taskEntity)
-		if err != nil {
-			return nil, err
-		}
+		taskDomain := mappers.EntityToDomain(&taskEntity)
 
 		tasksModel = append(tasksModel, taskDomain)
 	}
@@ -208,8 +211,11 @@ func scanTask(taskRow pgx.Row) (*models.Task, error) {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, exceptions.NewBusinessException(codes.TaskNotFound)
 		}
-		return nil, err
+		return nil, oops.
+			In("PostgresTaskRepository").
+			Tags("database", "postgres").
+			Wrapf(err, "falha crítica ao tentar executar o sql de busca da task")
 	}
 
-	return mappers.EntityToDomain(&taskEntity)
+	return mappers.EntityToDomain(&taskEntity), nil
 }

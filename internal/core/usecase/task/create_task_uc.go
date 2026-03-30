@@ -8,7 +8,7 @@ import (
 )
 
 type CreateTaskUC struct {
-    base.BaseUsecase[*models.Task, struct{}]
+    base.Usecase[*models.Task, struct{}]
     repository repository.TaskRepository
 }
 

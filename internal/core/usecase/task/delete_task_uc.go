@@ -9,7 +9,7 @@ import (
 )
 
 type DeleteTaskUC struct {
-	base.BaseUsecase[string, struct{}]
+	base.Usecase[string, struct{}]
 	repository repository.TaskRepository
 }
 
