@@ -17,7 +17,7 @@ projeto, comece por aqui:
 
 ✨ Principais Tecnologias e Padrões
 
-    Linguagem: Go 1.21+
+    Linguagem: Go 1.26+
 
     Arquitetura: Hexagonal (Ports & Adapters)
 
@@ -39,7 +39,7 @@ projeto, comece por aqui:
 
 1. Pré-requisitos
 
-   Go instalado (versão 1.21+)
+   Go instalado (versão 1.26+)
 
    Instância do PostgreSQL rodando localmente (ou via Docker)
 

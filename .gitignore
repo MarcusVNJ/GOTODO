@@ -61,5 +61,6 @@ Thumbs.db
 # --- IDEs e Editores ---
 .idea/
 .vscode/
+.fleet/
 *.swp
 *.swo
