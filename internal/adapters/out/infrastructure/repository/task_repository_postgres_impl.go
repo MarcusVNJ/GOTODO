@@ -60,7 +60,7 @@ func (repository *PostgresTaskRepository) ExistByID(context context.Context, id 
 	}
 	var exist int
 
-	err = repository.db.QueryRow(context, query, args).Scan(&exist)
+	err = repository.db.QueryRow(context, query, args...).Scan(&exist)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return false, nil
@@ -91,19 +91,28 @@ func (repository *PostgresTaskRepository) FindByID(context context.Context, id s
 func (repository *PostgresTaskRepository) FindAll(context context.Context, statusFilter string, minPriority int) ([]*models.Task, error) {
 	query, args, err := repository.builder.QueryFindAllTasks(statusFilter, minPriority)
 	if err != nil {
-		return nil, err
+		return nil, oops.
+			In("PostgresTaskRepository").
+			Tags("database", "postgres").
+			Wrapf(err, "falha ao criar sql para buscar todas as tasks")
 	}
 
 	tasksRows, err := repository.db.Query(context, query, args...)
 	if err != nil {
-		return nil, err
+		return nil, oops.
+			In("PostgresTaskRepository").
+			Tags("database", "postgres").
+			Wrapf(err, "falha crítica ao executar a query de busca de todas as tasks")
 	}
 
 	defer tasksRows.Close()
 
 	tasksModel, err := scanTasks(tasksRows)
 	if err != nil {
-		return nil, err
+		return nil, oops.
+			In("PostgresTaskRepository").
+			Tags("database", "postgres").
+			Wrapf(err, "falha ao escanear resultados das tasks")
 	}
 
 	return tasksModel, nil
@@ -115,12 +124,18 @@ func (repository *PostgresTaskRepository) Update(context context.Context, task *
 
 	query, args, err := repository.builder.QueryUpdate(taskEntity)
 	if err != nil {
-		return err
+		return oops.
+			In("PostgresTaskRepository").
+			Tags("database", "postgres").
+			Wrapf(err, "falha ao criar sql para atualizar task")
 	}
 
 	_, err = repository.db.Exec(context, query, args...)
 	if err != nil {
-		return err
+		return oops.
+			In("PostgresTaskRepository").
+			Tags("database", "postgres").
+			Wrapf(err, "falha crítica ao executar atualização no banco")
 	}
 
 	return nil
@@ -151,19 +166,28 @@ func (repository *PostgresTaskRepository) FindByStatus(context context.Context, 
 
 	query, args, err := repository.builder.QueryFindByStatus(status)
 	if err != nil {
-		return nil, err
+		return nil, oops.
+			In("PostgresTaskRepository").
+			Tags("database", "postgres").
+			Wrapf(err, "falha ao criar sql para buscar tasks por status")
 	}
 
 	tasksRows, err := repository.db.Query(context, query, args...)
 	if err != nil {
-		return nil, err
+		return nil, oops.
+			In("PostgresTaskRepository").
+			Tags("database", "postgres").
+			Wrapf(err, "falha crítica ao executar a query de busca por status")
 	}
 
 	defer tasksRows.Close()
 
 	tasksModel, err := scanTasks(tasksRows)
 	if err != nil {
-		return nil, err
+		return nil, oops.
+			In("PostgresTaskRepository").
+			Tags("database", "postgres").
+			Wrapf(err, "falha ao escanear resultados das tasks por status")
 	}
 
 	return tasksModel, nil

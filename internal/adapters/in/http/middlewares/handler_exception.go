@@ -3,6 +3,7 @@ package middlewares
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 
 	"github.com/MarcusVNJ/GOTODO/internal/core/exceptions"
@@ -27,11 +28,7 @@ func handlerError(err error) error {
 		return exceptions.NewUnexpectedException(codes.UnexpectedError, oopsErr)
 	}
 
-	var wrapErr *oops.OopsError
-
-	errors.As(oops.Wrap(err), &wrapErr)
-
-	unexpectedErr := exceptions.NewUnexpectedException(codes.UnexpectedError, wrapErr)
+	unexpectedErr := exceptions.NewUnexpectedException(codes.UnexpectedError, oops.Wrap(err))
 	unexpectedErr.Message = "Erro interno crítico no servidor. A engenharia foi alertada imediatamente."
 	return unexpectedErr
 }
@@ -55,7 +52,7 @@ func HandlerException[I any, O any](handler func(context.Context, *I) (*O, error
 				slog.Error("UnexpectedException capturada",
 					slog.String("error_msg", uErr.Message),
 					slog.Int("status", uErr.Code),
-					slog.Any("stack_trace", uErr.Details),
+					slog.String("stack_trace", fmt.Sprintf("%+v", uErr.Details)),
 				)
 			}
 		}(formattedErr)

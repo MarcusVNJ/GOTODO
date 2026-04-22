@@ -1,6 +1,8 @@
 package request
 
 import (
+	"time"
+
 	"github.com/MarcusVNJ/GOTODO/internal/core/enums"
 	"github.com/MarcusVNJ/GOTODO/internal/core/models"
 )
@@ -19,15 +21,13 @@ type UpdateTaskRequest struct {
 
 func (dto UpdateTaskRequest) ToModel() *models.Task {
 
-	task := models.NewTaskWithoutAudit(
+	audit := models.NewAuditInit(dto.Body.Id, time.Time{}, time.Now().UTC(), nil)
+
+	return models.NewTaskInit(
+		audit,
 		dto.Body.Title,
 		dto.Body.Description,
+		dto.Body.Status,
 		dto.Body.Priority,
 	)
-
-	if task != nil {
-		task.Audit.SetID(dto.Body.Id)
-	}
-
-	return task
 }

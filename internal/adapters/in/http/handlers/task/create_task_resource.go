@@ -30,6 +30,7 @@ func (r *CreateTaskResource) Handler(ctx context.Context, input *request.CreateT
 	return &response.OperationTaskResponse{
 		Body: response.MessagePayload{
 			Message: "Task criada com sucesso",
+			Id:      task.ID(),
 		},
 	}, nil
 }

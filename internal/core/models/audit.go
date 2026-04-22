@@ -35,7 +35,7 @@ func (audit *Audit) UpdatedAudit() {
 	audit.updatedAt = time.Now().UTC()
 }
 
-func (audit Audit) SetID(id string)       { audit.id = id }
+func (audit *Audit) SetID(id string)       { audit.id = id }
 func (audit Audit) ID() string            { return audit.id }
 func (audit Audit) CreatedAt() time.Time  { return audit.createdAt }
 func (audit Audit) UpdatedAt() time.Time  { return audit.updatedAt }

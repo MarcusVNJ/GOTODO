@@ -30,12 +30,13 @@ func MakeTaskRoutes(api huma.API, db *pgxpool.Pool) http.Handler {
 	resourceUpdateTask := handlers.NewUpdateTaskResource(updateTaskUsecase)
 
 	huma.Register(api, huma.Operation{
-		OperationID: "create-task",
-		Method:      http.MethodPost,
-		Path:        "/api/task",
-		Summary:     "Criar Tarefa",
-		Description: "Cria uma nova tarefa",
-		Tags:        []string{"Tasks"},
+		OperationID:   "create-task",
+		Method:        http.MethodPost,
+		Path:          "/api/task",
+		Summary:       "Criar Tarefa",
+		Description:   "Cria uma nova tarefa",
+		Tags:          []string{"Tasks"},
+		DefaultStatus: http.StatusCreated,
 	}, middlewares.HandlerException(resourceTaskSave.Handler))
 
 	huma.Register(api, huma.Operation{
@@ -57,12 +58,13 @@ func MakeTaskRoutes(api huma.API, db *pgxpool.Pool) http.Handler {
 	}, middlewares.HandlerException(resourceUpdateTask.Handler))
 
 	huma.Register(api, huma.Operation{
-		OperationID: "delete-task",
-		Method:      http.MethodDelete,
-		Path:        "/api/task/{id}",
-		Summary:     "Excluir Tarefa",
-		Description: "Remove uma tarefa por ID",
-		Tags:        []string{"Tasks"},
+		OperationID:   "delete-task",
+		Method:        http.MethodDelete,
+		Path:          "/api/task/{id}",
+		Summary:       "Excluir Tarefa",
+		Description:   "Remove uma tarefa por ID",
+		Tags:          []string{"Tasks"},
+		DefaultStatus: http.StatusNoContent,
 	}, middlewares.HandlerException(resourceTaskDelete.Handler))
 
 	return chi.NewRouter()
