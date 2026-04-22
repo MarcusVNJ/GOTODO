@@ -21,7 +21,7 @@ projeto, comece por aqui:
 
     Arquitetura: Hexagonal (Ports & Adapters)
 
-    Roteamento: go-chi/chi (Roteador leve, idiomático e compatível com net/http)
+    Roteamento & Documentação Automática: `danielgtaylor/huma/v2` (Geração automática de OpenAPI/Swagger) integrado com `go-chi/chi` (Roteador subjacente).
 
     Tratamento de Erros: Padrão Handler Adapter (tratamento centralizado de exceções em rotas web)
 
@@ -51,6 +51,7 @@ Crie um arquivo .env na raiz do projeto baseando-se nas chaves abaixo:env
 ENVIRONMENT=development
 PORT=8080
 DATABASE_URL=postgres://seu_user:sua_senha@localhost:5432/todo_db?sslmode=disable
+ENABLE_DOCS=true
 
 ### 3. Migrações de Banco de Dados
 
@@ -68,6 +69,15 @@ go mod tidy
 go run cmd/api/main.go
 
 O servidor estará disponível e escutando na porta configurada.
+
+### 5. Documentação da API (OpenAPI / Swagger)
+
+O projeto conta com documentação interativa gerada dinamicamente pelo Huma. Quando a variável de ambiente `ENABLE_DOCS=true` estiver configurada, os seguintes endpoints ficam disponíveis:
+
+- **Swagger UI**: `http://localhost:8080/docs`
+- **OpenAPI Schema (JSON)**: `http://localhost:8080/openapi.json`
+
+Em ambientes de produção, sugerimos definir `ENABLE_DOCS=false` para inibir a exposição da estrutura da API.
 📂 Estrutura de Pastas de Alto Nível
 
 GOTODO/

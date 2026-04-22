@@ -3,21 +3,25 @@ package config
 import (
 	"context"
 	"fmt"
-	routers "github.com/MarcusVNJ/GOTODO/cmd/api/router"
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
-	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/kelseyhightower/envconfig"
-	"github.com/joho/godotenv"
 	"log/slog"
 	"os"
 	"time"
+
+	routers "github.com/MarcusVNJ/GOTODO/cmd/api/router"
+	"github.com/danielgtaylor/huma/v2"
+	"github.com/danielgtaylor/huma/v2/adapters/humachi"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/joho/godotenv"
+	"github.com/kelseyhightower/envconfig"
 )
 
 type AppConfig struct {
 	Environment string `envconfig:"ENVIRONMENT" default:"development"`
 	Port        string `envconfig:"PORT" default:"8080"`
 	DatabaseURL string `envconfig:"DATABASE_URL" required:"true"`
+	EnableDocs  bool   `envconfig:"ENABLE_DOCS" default:"true"`
 }
 
 func LoadConfig() (*AppConfig, error) {
@@ -65,12 +69,27 @@ func InitDB(ctx context.Context, databaseURL string) (*pgxpool.Pool, error) {
 	return db, nil
 }
 
-func AddRouters(router *chi.Mux, db *pgxpool.Pool) {
-	router.Mount("/api", routers.MakeTaskRoutes(db))
+func AddRouters(router *chi.Mux, api huma.API, db *pgxpool.Pool) {
+	router.Mount("/api", routers.MakeTaskRoutes(api, db))
 }
 
 func AddMiddlewares(router *chi.Mux) {
 	router.Use(middleware.RequestID)
 	router.Use(middleware.RealIP)
 	router.Use(middleware.Recoverer)
+}
+
+func AddExternalDocs(router *chi.Mux, enableDocs bool) huma.API {
+	humaConfig := huma.DefaultConfig("GOTODO API", "1.0.0")
+	if enableDocs {
+		humaConfig.DocsPath = "/docs"
+		humaConfig.OpenAPIPath = "/openapi.json"
+		humaConfig.SchemasPath = "/schemas"
+	} else {
+		humaConfig.DocsPath = ""
+		humaConfig.OpenAPIPath = ""
+		humaConfig.SchemasPath = ""
+	}
+
+	return humachi.New(router, humaConfig)
 }

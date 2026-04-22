@@ -1,11 +1,12 @@
 package handlers
 
 import (
-	"encoding/json"
+	"context"
+
+	"github.com/MarcusVNJ/GOTODO/internal/adapters/in/http/dto/request"
 	"github.com/MarcusVNJ/GOTODO/internal/adapters/in/http/dto/response"
 	"github.com/MarcusVNJ/GOTODO/internal/core/models"
 	"github.com/MarcusVNJ/GOTODO/internal/core/usecase"
-	"net/http"
 )
 
 type GetTaskByIdResource struct {
@@ -18,18 +19,13 @@ func NewGetTaskByIdResource(usecase usecase.IUsecase[string, *models.Task]) *Get
 	}
 }
 
-func (handler *GetTaskByIdResource) Handler(w http.ResponseWriter, r *http.Request) error {
-	taskId := r.PathValue("id")
-
-	task, err := handler.usecase.Execute(r.Context(), taskId)
+func (r *GetTaskByIdResource) Handler(ctx context.Context, input *request.GetTaskRequest) (*response.GetTaskResponse, error) {
+	task, err := r.usecase.Execute(ctx, input.ID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-
-	taskResponse := response.NewTaskResponse(task)
-
-	return json.NewEncoder(w).Encode(taskResponse)
+	return &response.GetTaskResponse{
+		Body: response.NewTaskResponse(task),
+	}, nil
 }

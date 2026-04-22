@@ -46,7 +46,7 @@ Para que o core consiga conversar com o banco de dados sem conhecê-lo, ele defi
 
 Ficam em internal/adapters. Eles são os tradutores entre o mundo externo e o nosso domínio.
 
-    Inbound (in/http): Nossos Handlers que pegam o JSON da requisição, validam via DTOs e convertem para o modelo puro antes de chamar os Casos de Uso.
+    Inbound (in/http): Nossos Handlers utilizam o ecossistema Huma. Não lidamos com decodificação de JSON manual (`json.Unmarshal`). Definimos structs `Input` e `Output`, e o Huma valida magicamente via tags (ex: `required:"true"`). Se for válido, o Handler converte o DTO para o modelo puro e chama o UseCase.
 
     Outbound (out/infrastructure): Nossa implementação do Postgres. Aqui usamos mappers para converter a entidade de domínio em uma TaskEntity e o query_builder para gerar o SQL.
 
@@ -56,8 +56,9 @@ Ficam em internal/adapters. Eles são os tradutores entre o mundo externo e o no
 Não espalhamos injeção de dependência pelo código. A "colagem" das peças acontece exclusivamente no diretório cmd/api/router e main.go. É lá que instanciamos o banco, passamos pro repositório, que vai pro UseCase, que vai pro Handler.
 3.2. Tratamento Centralizado de Erros
 
-Nossos Handlers de rota retornam um error (ex: func(w http.ResponseWriter, r *http.Request) error).
-Nós criamos um middleware/adaptador central (ExceptionHandler) que envolve todas as rotas. Se houver falha de validação de input (ex: enviar uma string num campo de inteiro gerando json.UnmarshalTypeError), ou um erro de negócio (CodeInvalidData), você apenas retorna o erro. O ExceptionHandler o traduz para um JSON padronizado com Status 400. Se for erro de banco, ele devolve um erro 500 genérico ao cliente e loga o detalhe técnico no servidor.
+Nossos Handlers de rota são super limpos, retornando apenas structs tipadas e um `error` (ex: `func(ctx context.Context, input *Input) (*Output, error)`).
+Nós criamos um wrapper chamado `middlewares.HandlerException` que envolve todas as rotas no momento do registro. O seu único trabalho na Resource é: deu erro? Faça `return nil, err`!
+O wrapper captura esse erro, converte para o padrão RFC 7807 problem details (Status 400, 404, etc.) e caso seja um erro crítico não mapeado (500), ele responde com uma mensagem sanitizada e cria uma *goroutine* separada para fazer o log completo (com a stack trace do `oops`) via `slog` no console, sem travar a requisição do usuário.
 3.3. Configuração Orientada a Ambiente
 
 Lemos configurações via variáveis de ambiente usando o pacote internal/config, populando uma struct fortemente tipada (AppConfig). Se faltar uma variável obrigatória, o sistema aplica o padrão Fail-Fast e não inicia.
@@ -68,6 +69,11 @@ Nunca criamos tabelas manualmente. Utilizamos a biblioteca golang-migrate/migrat
     Onde ficam: Todos os scripts SQL ficam na pasta migrations/ na raiz do projeto, fora do internal (já que o Core não deve saber sobre SQL).
 
     Up e Down: Para cada alteração, há um arquivo .up.sql (aplica a mudança) e um .down.sql (reverte a mudança). Isso garante que o esquema do banco evolua de forma segura e rastreável junto com a API.
+
+3.5. Documentação Automática (Swagger/OpenAPI)
+
+O projeto se auto-documenta dinamicamente via Huma. Se você quiser ver quais rotas estão disponíveis e testá-las sem precisar abrir o Postman:
+Acesse: `http://localhost:8080/docs` (garanta que a env `ENABLE_DOCS=true` está configurada no seu `.env`).
 
 Primeiros Passos
 

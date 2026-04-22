@@ -21,3 +21,7 @@ func NewBusinessException(err Exception) *BusinessException {
 func (err *BusinessException) Error() string {
 	return fmt.Sprintf("%d: %s", err.Code, err.Message)
 }
+
+func (err *BusinessException) GetStatus() int {
+	return err.HTTPStatus
+}

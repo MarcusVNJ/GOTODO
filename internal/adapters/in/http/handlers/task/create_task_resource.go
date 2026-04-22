@@ -1,45 +1,35 @@
 package handlers
 
 import (
-    "encoding/json"
-    "github.com/MarcusVNJ/GOTODO/internal/adapters/in/http/dto/request"
-    "github.com/MarcusVNJ/GOTODO/internal/core/exceptions"
-    "github.com/MarcusVNJ/GOTODO/internal/core/exceptions/codes"
-    "github.com/MarcusVNJ/GOTODO/internal/core/models"
-    "github.com/MarcusVNJ/GOTODO/internal/core/usecase"
-    "net/http"
+	"context"
+
+	"github.com/MarcusVNJ/GOTODO/internal/adapters/in/http/dto/request"
+	"github.com/MarcusVNJ/GOTODO/internal/adapters/in/http/dto/response"
+	"github.com/MarcusVNJ/GOTODO/internal/core/models"
+	"github.com/MarcusVNJ/GOTODO/internal/core/usecase"
 )
 
 type CreateTaskResource struct {
-    usecase usecase.IUsecase[*models.Task, struct{}]
+	usecase usecase.IUsecase[*models.Task, struct{}]
 }
 
 func NewCreateTaskResource(usecase usecase.IUsecase[*models.Task, struct{}]) *CreateTaskResource {
-    return &CreateTaskResource{
-        usecase: usecase,
-    }
+	return &CreateTaskResource{
+		usecase: usecase,
+	}
 }
 
-func (handler *CreateTaskResource) Handler(w http.ResponseWriter, r *http.Request) error {
+func (r *CreateTaskResource) Handler(ctx context.Context, input *request.CreateTaskRequest) (*response.OperationTaskResponse, error) {
+	task := input.ToModel()
 
-    var requestDto request.CreateTaskRequest
-    if err := json.NewDecoder(r.Body).Decode(&requestDto); err != nil {
-        return exceptions.NewBusinessException(codes.UnprocessableEntity)
-    }
+	_, err := r.usecase.Execute(ctx, task)
+	if err != nil {
+		return nil, err
+	}
 
-    task := requestDto.ToModel()
-
-    _, err := handler.usecase.Execute(r.Context(), task)
-    if err != nil {
-        return err
-    }
-
-    w.Header().Set("Content-Type", "application/json")
-    w.WriteHeader(http.StatusCreated)
-
-    responsePayload := map[string]string{
-        "message": "Task criada com sucesso",
-    }
-
-    return json.NewEncoder(w).Encode(responsePayload)
+	return &response.OperationTaskResponse{
+		Body: response.MessagePayload{
+			Message: "Task criada com sucesso",
+		},
+	}, nil
 }

@@ -2,12 +2,13 @@ package main
 
 import (
 	"context"
-	"github.com/MarcusVNJ/GOTODO/internal/config"
-	"github.com/go-chi/chi/v5"
-	_ "github.com/lib/pq"
 	"log/slog"
 	"net/http"
 	"os"
+
+	"github.com/MarcusVNJ/GOTODO/internal/config"
+	"github.com/go-chi/chi/v5"
+	_ "github.com/lib/pq"
 )
 
 func main() {
@@ -34,7 +35,10 @@ func main() {
 	router := chi.NewRouter()
 
 	config.AddMiddlewares(router)
-	config.AddRouters(router, db)
+
+	api := config.AddExternalDocs(router, cfg.EnableDocs)
+
+	config.AddRouters(router, api, db)
 
 	addr := ":" + cfg.Port
 	slog.Info("Iniciando servidor", slog.String("porta", cfg.Port))

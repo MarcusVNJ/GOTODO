@@ -1,11 +1,13 @@
 package handlers
 
 import (
-	"encoding/json"
+	"context"
+
+	"github.com/MarcusVNJ/GOTODO/internal/adapters/in/http/dto/request"
+	"github.com/MarcusVNJ/GOTODO/internal/adapters/in/http/dto/response"
 	"github.com/MarcusVNJ/GOTODO/internal/core/exceptions"
 	"github.com/MarcusVNJ/GOTODO/internal/core/exceptions/codes"
 	"github.com/MarcusVNJ/GOTODO/internal/core/usecase"
-	"net/http"
 )
 
 type DeleteTaskResource struct {
@@ -18,27 +20,22 @@ func NewDeleteTaskResource(usecase usecase.IUsecase[string, struct{}]) *DeleteTa
 	}
 }
 
-func (handler *DeleteTaskResource) Handler(w http.ResponseWriter, r *http.Request) error {
-	taskId := r.PathValue("id")
-
-	err := validateId(taskId)
+func (r *DeleteTaskResource) Handler(ctx context.Context, input *request.DeleteTaskRequest) (*response.OperationTaskResponse, error) {
+	err := validateId(input.ID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	_, err = handler.usecase.Execute(r.Context(), taskId)
+	_, err = r.usecase.Execute(ctx, input.ID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusNoContent)
-
-	responsePayload := map[string]string{
-		"message": "Task criada com sucesso",
-	}
-
-	return json.NewEncoder(w).Encode(responsePayload)
+	return &response.OperationTaskResponse{
+		Body: response.MessagePayload{
+			Message: "Task deletada com sucesso",
+		},
+	}, nil
 }
 
 func validateId(id string) error {

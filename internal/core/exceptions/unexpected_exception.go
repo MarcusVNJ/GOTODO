@@ -27,3 +27,7 @@ func NewUnexpectedException(err Exception, details *oops.OopsError) *UnexpectedE
 func (e *UnexpectedException) Error() string {
 	return e.Message
 }
+
+func (e *UnexpectedException) GetStatus() int {
+	return e.Code
+}

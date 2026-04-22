@@ -1,13 +1,12 @@
 package handlers
 
 import (
-	"encoding/json"
+	"context"
+
 	"github.com/MarcusVNJ/GOTODO/internal/adapters/in/http/dto/request"
-	"github.com/MarcusVNJ/GOTODO/internal/core/exceptions"
-	"github.com/MarcusVNJ/GOTODO/internal/core/exceptions/codes"
+	"github.com/MarcusVNJ/GOTODO/internal/adapters/in/http/dto/response"
 	"github.com/MarcusVNJ/GOTODO/internal/core/models"
 	"github.com/MarcusVNJ/GOTODO/internal/core/usecase"
-	"net/http"
 )
 
 type UpdateTaskResource struct {
@@ -20,26 +19,17 @@ func NewUpdateTaskResource(usecase usecase.IUsecase[*models.Task, struct{}]) *Up
 	}
 }
 
-func (handler *UpdateTaskResource) Handler(w http.ResponseWriter, r *http.Request) error {
-	var updatedTask request.UpdateTaskRequest
+func (r *UpdateTaskResource) Handler(ctx context.Context, input *request.UpdateTaskRequest) (*response.OperationTaskResponse, error) {
+	task := input.ToModel()
 
-	if err := json.NewDecoder(r.Body).Decode(&updatedTask); err != nil {
-		return exceptions.NewBusinessException(codes.UnprocessableEntity)
-	}
-
-	task := updatedTask.ToModel()
-
-	_, err := handler.usecase.Execute(r.Context(), task)
+	_, err := r.usecase.Execute(ctx, task)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-
-	responsePayload := map[string]string{
-		"message": "Task atualizada com sucesso",
-	}
-
-	return json.NewEncoder(w).Encode(responsePayload)
+	return &response.OperationTaskResponse{
+		Body: response.MessagePayload{
+			Message: "Task atualizada com sucesso",
+		},
+	}, nil
 }

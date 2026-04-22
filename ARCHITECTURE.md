@@ -41,14 +41,13 @@ A separação de responsabilidades reflete rigorosamente nossa árvore de diret�
     migrations/: Scripts SQL puros (Up/Down) processados pelo golang-migrate, mantidos na raiz para garantir que a infraestrutura de banco de dados não polua o código interno.
 
 3. Padrões de Engenharia e Design
-   3.1. Tratamento Centralizado de Erros (Exception Handler)
+   3.1. Tratamento Centralizado de Erros (HandlerException)
 
-Implementamos um adaptador de manipulador customizado (ExceptionHandler). Nossos Resources implementam a assinatura
-func(w, r) error. O middleware intercepta o erro retornado:
+Implementamos um wrapper genérico (`middlewares.HandlerException`) que envelopa todos os controladores da API. Como utilizamos o ecossistema Huma, nossos Resources implementam assinaturas limpas no formato `func(ctx context.Context, input *I) (*O, error)`. O middleware intercepta qualquer `error` retornado:
 
-    Erros do Cliente (4xx): Falhas de conversão de JSON (ex: string enviada em campo int) ou erros de negócio gerados pelo Core são interceptados, convertidos para o Status HTTP correspondente (400, 404, 409) e retornados como JSON estruturado. Não geram logs de nível Error, evitando falsos-positivos na observabilidade.
+    Erros do Cliente (4xx): Falhas de validação de input (ex: constraints de tamanho ou formatação JSON) são tratadas nativamente pelo Huma. Erros de negócio gerados pelo Core (BusinessException) são formatados para a RFC 7807 via interface `huma.StatusError`. Não geram logs de nível Error, evitando falsos-positivos na observabilidade.
 
-    Erros de Servidor (5xx): Falhas técnicas são logadas pelo slog com todo o contexto (stack trace, path, método) e o cliente recebe apenas uma mensagem sanitizada genérica.
+    Erros de Servidor (5xx): Falhas técnicas ou inesperadas são encapsuladas pela `UnexpectedException`. O wrapper aciona um log assíncrono (em uma *goroutine* apartada) utilizando `slog`, contendo a stack trace completa rica gerada pela biblioteca `oops`, e o cliente final recebe apenas uma mensagem genérica de erro interno.
 
 3.2. Segregação de Modelos (DTO -> Domain -> Entity)
 
@@ -60,13 +59,13 @@ Para proteger o encapsulamento, utilizamos modelos diferentes para cada fase da 
 
     Entity (adapters/out/infrastructure/entity): Usado pelo repositório e pelo query_builder para espelhar as tabelas do banco de dados (contendo tags db). A conversão ocorre no pacote mappers.
 
-4. O Fluxo de uma Requisição
+6. O Fluxo de uma Requisição
 
 Ao executar um fluxo (ex: Criar Tarefa), a requisição atravessa as camadas da seguinte forma:
 
-    Entrada: A requisição atinge o framework go-chi, passando por middlewares globais e caindo no nosso AppRouter customizado.
+    Entrada: A requisição atinge o framework `go-chi`, passa pela serialização do `huma` e atinge o wrapper `HandlerException`.
 
-    Transporte (adapters/in): O Resource executa o decode do JSON para o DTO. Falhas de parse retornam imediatamente. Ocorrendo sucesso, o DTO é mapeado para o modelo do Core, e o UseCase é acionado.
+    Transporte (adapters/in): O Huma valida automaticamente o corpo e os parâmetros contra o schema OpenAPI usando os DTOs (structs `Input`). Se válido, invoca o Resource. O Resource mapeia para o modelo do Core, e o UseCase é acionado.
 
     Lógica (core/usecase): O UseCase orquestra as regras. Se todas as validações do modelo de negócio passarem, ele invoca a interface do Repositório (Porta de saída).
 
@@ -74,45 +73,24 @@ Ao executar um fluxo (ex: Criar Tarefa), a requisição atravessa as camadas da 
 
     Retorno: O sucesso (ou falha) borbulha de volta pela pilha até o Resource ou o ExceptionHandler formartar a resposta HTTP correspondente.
 
-5. 🛡️ Tratamento Centralizado de Erros no GOTODO
+7. 🛡️ Tratamento Centralizado de Erros no GOTODO
 
-O projeto GOTODO utiliza o padrão de Handler Adapter atrelado a um roteador customizado para garantir um tratamento de
-exceções centralizado, uniforme e seguro em todas as rotas web da aplicação. Essa arquitetura elimina a duplicação de
-código, garante que as respostas da API sejam sempre consistentes e mitiga totalmente o risco de vazamento de dados
-sensíveis da infraestrutura para o usuário final.
+O projeto GOTODO utiliza a abordagem de Middleware/Wrapper atrelada à declaração de rotas do Huma para garantir um tratamento de exceções centralizado, uniforme e rápido.
 
 A mecânica rigorosa de tratamento de erros funciona da seguinte forma:
 
-    Roteamento Seguro por Design (AppRouter): Para garantir que nenhuma rota fuja da padronização de erros, implementamos um wrapper (Decorator) sobre o roteador do framework chi. Nós sobrescrevemos os verbos HTTP principais (Get, Post, Delete, etc.) para aceitarem exclusivamente a nossa assinatura customizada ResourceHandler: func(w http.ResponseWriter, r *http.Request) error. Isso envelopa automaticamente todas as requisições com o nosso middleware interceptador, tornando impossível que um desenvolvedor esqueça de aplicar o tratamento de erros em uma nova rota.
+    Roteamento Padronizado (Huma): A declaração de rotas ocorre via `huma.Register`. Isso garante que o input seja validado dinamicamente antes de bater no core da aplicação. No momento do registro, injetamos a nossa função `middlewares.HandlerException`.
 
-    Assinatura Simplificada nos Handlers: Graças a esse roteador customizado, os manipuladores de rota (Resources) não precisam se preocupar em formatar a resposta HTTP em caso de erro. Eles simplesmente retornam a interface error e delegam a responsabilidade.
+    Assinatura Limpa nos Handlers: Os manipuladores de rota (Resources) estão completamente limpos. Eles não mexem em `http.ResponseWriter` ou definem Status Code manualmente. Em caso de falha, apenas retornam `nil, err`.
 
-    O Middleware Interceptador (ExceptionHandler): Este adaptador central atua envolvendo todas as rotas da aplicação. Sua única responsabilidade é capturar qualquer erro devolvido pelos Handlers, analisar a sua natureza (usando errors.As) e dar o destino correto a ele, dividindo-os em duas categorias estritas:
+    O Interceptador e Logging Assíncrono (`HandlerException`): Sua única responsabilidade é capturar os erros, realizar os castings necessários (para `BusinessException` ou `UnexpectedException`), disparar em uma Thread separada (goroutine) o registro no sistema de logs (`slog`), e devolver o erro estruturado para o Huma formatar de acordo com a RFC 7807 (Problem Details).
 
 1. Erros do Cliente e Regras de Negócio (Status 4xx)
 
-   Este fluxo trata falhas de requisição, como problemas no parsing do JSON (por exemplo, enviar uma string em um campo
-   numérico, gerando um json.UnmarshalTypeError), ou exceções geradas pelo Core (nossa BusinessException / códigos como
-   CodeInvalidData).
+   Este fluxo trata falhas de requisição ou exceções geradas pelo Core (ex: `BusinessException`). Graças à interface `GetStatus() int`, a nossa exceção customizada indica ao Huma exatamente qual status HTTP devolver (como 400, 404, 409).
 
-   O middleware intercepta essas falhas e as traduz para um JSON padronizado e estruturado, acompanhado do Status HTTP
-   adequado (como 400 Bad Request, 404 Not Found ou 409 Conflict).
-
-   Observabilidade Limpa: Para garantir que as nossas ferramentas de monitoramento permaneçam úteis, esses erros (que
-   são desvios de fluxo normais e esperados da regra de negócio) não geram logs de nível Error, evitando alertas de
-   falsos-positivos para a equipe.
+   O Huma gera um JSON RFC 7807. Esses erros são logados em modo assíncrono na severidade `INFO` (já que são fluxos de negócio naturais), protegendo os alertas da equipe.
 
 2. Erros Técnicos e Falhas de Infraestrutura (Status 5xx)
 
-   Quando ocorrem falhas não previstas ou problemas estruturais (como falhas de conexão com o banco de dados Postgres
-   encapsuladas pela nossa UnexpectedException), o sistema prioriza a segurança (Fail-Safe).
-
-   O cliente recebe um erro genérico de Status 500, com uma mensagem sanitizada (ex: "Erro interno no servidor"),
-   garantindo que nenhum detalhe técnico interno ou stack trace seja vazado.
-
-   Simultaneamente, o sistema utiliza o pacote nativo log/slog para registrar a falha criticamente no servidor. Este log
-   contém o contexto técnico completo e estruturado para a equipe de engenharia, incluindo a stack trace rica gerada
-   pela biblioteca oops, o path da URL e o método HTTP utilizado.
-
-   Malha Fina de Segurança: Se um erro cru (não mapeado como Business ou Unexpected) chegar ao handler, o middleware
-   aciona um alerta crítico de que o fluxo de erro padrão foi violado.
+   Problemas não mapeados disparam o `UnexpectedException`. Para garantir segurança total, os detalhes originais e a stack trace (`oops`) são logados localmente via `slog.Error` dentro de uma *goroutine*. O cliente, no entanto, visualiza apenas o genérico 500, bloqueando o vazamento de detalhes estruturais.

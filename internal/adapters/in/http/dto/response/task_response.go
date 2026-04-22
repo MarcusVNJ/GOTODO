@@ -5,19 +5,23 @@ import (
 	"github.com/MarcusVNJ/GOTODO/internal/core/models"
 )
 
-type TaskResponse struct {
+type taskResponse struct {
 	Title       string       `json:"title"`
 	Description string       `json:"description,omitempty"`
 	Status      enums.Status `json:"status"`
 	Priority    int          `json:"priority"`
 }
 
-func NewTaskResponse(task *models.Task) *TaskResponse {
+type GetTaskResponse struct {
+	Body *taskResponse
+}
+
+func NewTaskResponse(task *models.Task) *taskResponse {
 	if task == nil {
 		return nil
 	}
 
-	return &TaskResponse{
+	return &taskResponse{
 		Title:       task.Title(),
 		Description: task.Description(),
 		Status:      task.Status(),
