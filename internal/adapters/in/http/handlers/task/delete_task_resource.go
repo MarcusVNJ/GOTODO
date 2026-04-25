@@ -3,11 +3,15 @@ package handlers
 import (
 	"context"
 
+	"net/http"
+
 	"github.com/MarcusVNJ/GOTODO/internal/adapters/in/http/dto/request"
 	"github.com/MarcusVNJ/GOTODO/internal/adapters/in/http/dto/response"
+	"github.com/MarcusVNJ/GOTODO/internal/adapters/in/http/middlewares"
 	"github.com/MarcusVNJ/GOTODO/internal/core/exceptions"
 	"github.com/MarcusVNJ/GOTODO/internal/core/exceptions/codes"
 	"github.com/MarcusVNJ/GOTODO/internal/core/usecase"
+	"github.com/danielgtaylor/huma/v2"
 )
 
 type DeleteTaskResource struct {
@@ -36,6 +40,18 @@ func (r *DeleteTaskResource) Handler(ctx context.Context, input *request.DeleteT
 			Message: "Task deletada com sucesso",
 		},
 	}, nil
+}
+
+func (r *DeleteTaskResource) Register(api huma.API) {
+	huma.Register(api, huma.Operation{
+		OperationID:   "delete-task",
+		Method:        http.MethodDelete,
+		Path:          "/api/task/{id}",
+		Summary:       "Excluir Tarefa",
+		Description:   "Remove uma tarefa por ID",
+		Tags:          []string{"Tasks"},
+		DefaultStatus: http.StatusNoContent,
+	}, middlewares.HandlerException(r.Handler))
 }
 
 func validateId(id string) error {

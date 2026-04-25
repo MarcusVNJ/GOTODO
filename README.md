@@ -11,15 +11,17 @@ de prioridades, auditoria e transições rigorosas de estado.
 Para manter o código limpo e o time alinhado, documentamos nossas decisões técnicas e fundamentos. Se você é novo no
 projeto, comece por aqui:
 
-    🚀 Guia de Onboarding: Leitura obrigatória. Explica os fundamentos de memória do Go (Stack vs Heap) e os padrões específicos de fluxo e injeção de dependências do nosso código.
+    [🚀 Guia de Onboarding](./ONBOARDING.md): Leitura obrigatória. Explica os fundamentos de memória do Go (Stack vs Heap) e os padrões específicos de fluxo e injeção de dependências do nosso código.
 
-    🏛️ (./ARCHITECTURE.md): Detalha nossa estrutura de diretórios Hexagonal, o isolamento absoluto do domínio (Core) e como lidamos com a conversão de DTOs e Entities.
+    [🏛️ Arquitetura do Projeto](./ARCHITECTURE.md): Detalha nossa estrutura de diretórios Hexagonal, o isolamento absoluto do domínio (Core) e como lidamos com a conversão de DTOs e Entities.
 
 ✨ Principais Tecnologias e Padrões
 
     Linguagem: Go 1.26+
 
     Arquitetura: Hexagonal (Ports & Adapters)
+
+    Injeção de Dependências: `uber-go/fx` com módulos descentralizados.
 
     Roteamento & Documentação Automática: `danielgtaylor/huma/v2` (Geração automática de OpenAPI/Swagger) integrado com `go-chi/chi` (Roteador subjacente).
 
@@ -83,6 +85,7 @@ Em ambientes de produção, sugerimos definir `ENABLE_DOCS=false` para inibir a 
 GOTODO/
 ├── cmd/
 │   └── api/                  # Entry point e Injeção de Dependências (Composition Root)
+│       └── di/               # Empacotamento de injeção dos UseCases (mantendo o Core puro)
 ├── internal/
 │   ├── config/               # Load de variáveis de ambiente
 │   ├── core/                 # REGRAS DE NEGÓCIO PURAS (Agnóstico à Web/DB)

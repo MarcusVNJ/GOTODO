@@ -7,14 +7,10 @@ import (
 	"os"
 	"time"
 
-	routers "github.com/MarcusVNJ/GOTODO/cmd/api/router"
-	"github.com/danielgtaylor/huma/v2"
-	"github.com/danielgtaylor/huma/v2/adapters/humachi"
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 	"github.com/kelseyhightower/envconfig"
+	"go.uber.org/fx"
 )
 
 type AppConfig struct {
@@ -37,10 +33,10 @@ func LoadConfig() (*AppConfig, error) {
 	return &cfg, nil
 }
 
-func InitLogger(env string) {
+func InitLogger(cfg *AppConfig) {
 	var handler slog.Handler
 
-	if env == "production" {
+	if cfg.Environment == "production" {
 		handler = slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo})
 	} else {
 		handler = slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug})
@@ -50,46 +46,39 @@ func InitLogger(env string) {
 	slog.SetDefault(logger)
 }
 
-func InitDB(ctx context.Context, databaseURL string) (*pgxpool.Pool, error) {
-
-	db, err := pgxpool.New(ctx, databaseURL)
+func InitDB(lc fx.Lifecycle, cfg *AppConfig) (*pgxpool.Pool, error) {
+	db, err := pgxpool.New(context.Background(), cfg.DatabaseURL)
 	if err != nil {
 		return nil, fmt.Errorf("não foi possível configurar o pool de conexões: %w", err)
 	}
 
-	pingCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
-	defer cancel()
+	lc.Append(fx.Hook{
+		OnStart: func(ctx context.Context) error {
+			pingCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+			defer cancel()
 
-	if err := db.Ping(pingCtx); err != nil {
-		db.Close()
-		return nil, fmt.Errorf("banco de dados inacessível: %w", err)
-	}
+			if err := db.Ping(pingCtx); err != nil {
+				db.Close()
+				return fmt.Errorf("banco de dados inacessível: %w", err)
+			}
 
-	slog.Info("Conexão com o banco de dados estabelecida com sucesso (pgx pool)")
+			slog.Info("Conexão com o banco de dados estabelecida com sucesso (pgx pool)")
+			return nil
+		},
+		OnStop: func(ctx context.Context) error {
+			slog.Info("Encerrando pool de conexões com banco de dados")
+			db.Close()
+			return nil
+		},
+	})
+
 	return db, nil
 }
 
-func AddRouters(router *chi.Mux, api huma.API, db *pgxpool.Pool) {
-	router.Mount("/api", routers.MakeTaskRoutes(api, db))
-}
-
-func AddMiddlewares(router *chi.Mux) {
-	router.Use(middleware.RequestID)
-	router.Use(middleware.RealIP)
-	router.Use(middleware.Recoverer)
-}
-
-func AddExternalDocs(router *chi.Mux, enableDocs bool) huma.API {
-	humaConfig := huma.DefaultConfig("GOTODO API", "1.0.0")
-	if enableDocs {
-		humaConfig.DocsPath = "/docs"
-		humaConfig.OpenAPIPath = "/openapi.json"
-		humaConfig.SchemasPath = "/schemas"
-	} else {
-		humaConfig.DocsPath = ""
-		humaConfig.OpenAPIPath = ""
-		humaConfig.SchemasPath = ""
-	}
-
-	return humachi.New(router, humaConfig)
-}
+var Module = fx.Module("config",
+	fx.Provide(
+		LoadConfig,
+		InitDB,
+	),
+	fx.Invoke(InitLogger),
+)

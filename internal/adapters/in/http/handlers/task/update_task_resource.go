@@ -3,10 +3,14 @@ package handlers
 import (
 	"context"
 
+	"net/http"
+
 	"github.com/MarcusVNJ/GOTODO/internal/adapters/in/http/dto/request"
 	"github.com/MarcusVNJ/GOTODO/internal/adapters/in/http/dto/response"
+	"github.com/MarcusVNJ/GOTODO/internal/adapters/in/http/middlewares"
 	"github.com/MarcusVNJ/GOTODO/internal/core/models"
 	"github.com/MarcusVNJ/GOTODO/internal/core/usecase"
+	"github.com/danielgtaylor/huma/v2"
 )
 
 type UpdateTaskResource struct {
@@ -32,4 +36,15 @@ func (r *UpdateTaskResource) Handler(ctx context.Context, input *request.UpdateT
 			Message: "Task atualizada com sucesso",
 		},
 	}, nil
+}
+
+func (r *UpdateTaskResource) Register(api huma.API) {
+	huma.Register(api, huma.Operation{
+		OperationID: "update-task",
+		Method:      http.MethodPut,
+		Path:        "/api/task",
+		Summary:     "Atualizar Tarefa",
+		Description: "Atualiza os atributos de uma tarefa",
+		Tags:        []string{"Tasks"},
+	}, middlewares.HandlerException(r.Handler))
 }

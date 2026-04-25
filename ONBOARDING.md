@@ -51,10 +51,36 @@ Ficam em internal/adapters. Eles são os tradutores entre o mundo externo e o no
     Outbound (out/infrastructure): Nossa implementação do Postgres. Aqui usamos mappers para converter a entidade de domínio em uma TaskEntity e o query_builder para gerar o SQL.
 
 3. Padrões Específicos do Projeto GOTODO
-3.1. Raiz de Composição (Composition Root)
+3.1. Injeção de Dependência e Raiz de Composição (uber-go/fx)
 
-Não espalhamos injeção de dependência pelo código. A "colagem" das peças acontece exclusivamente no diretório cmd/api/router e main.go. É lá que instanciamos o banco, passamos pro repositório, que vai pro UseCase, que vai pro Handler.
-3.2. Tratamento Centralizado de Erros
+Não instanciamos repositórios ou casos de uso manualmente dentro dos Handlers (ex: não fazemos `new(...)` espalhado pelo código). Usamos a biblioteca `uber-go/fx` para o gerenciamento de Injeção de Dependência (DI) e controle do ciclo de vida da aplicação.
+
+Se você olhar pelo código, verá pacotes exportando uma variável `var Module = fx.Module(...)`. Entenda como o FX funciona:
+
+**a) Avaliação Preguiçosa vs Imediata (`fx.Provide` vs `fx.Invoke`)**
+- `fx.Provide(Construtor)`: Ensina o FX a criar um objeto (ex: `LoadConfig` ou `InitDB`). O FX é **preguiçoso (lazy)**: ele registra a "receita" de como criar a conexão com o banco, mas só a executará se alguém na aplicação pedir por um banco de dados.
+- `fx.Invoke(Função)`: É o gatilho **imediato (eager)**. Diz para o FX: "Execute isso obrigatoriamente no momento da inicialização". É usado para iniciar o Logger ou subir o Servidor HTTP (`StartHTTPServer`). O FX lerá a assinatura dessa função, verá as dependências necessárias e executará a cadeia de construtores do `fx.Provide` para resolvê-la.
+
+**b) Ocultando Código Concreto sob Interfaces (`fx.Annotate` e `fx.As`)**
+Na Arquitetura Hexagonal, o Core exige interfaces (ex: `ports.TaskRepository`), mas o adaptador fornece uma struct concreta (`*PostgresTaskRepository`). Para ensinar o FX a disfarçar o construtor, usamos:
+```go
+fx.Annotate(NewPostgresTaskRepository, fx.As(new(repository.TaskRepository)))
+```
+Isso garante o princípio de Inversão de Dependência: o Core não acopla com o banco, acopla com a Interface.
+
+**c) Colisão de Tipos em Generics e Named Instances (`fx.ResultTags` e `fx.ParamTags`)**
+Um problema complexo ocorre quando duas funções fornecem o mesmo tipo de retorno. Exemplo: a criação e a atualização de uma tarefa retornam a mesmíssima interface genérica: `usecase.IUsecase[*models.Task, struct{}]`. Se nada for feito, o FX quebra na inicialização avisando sobre *ambiguidade* (não sabe qual injetar).
+Para resolver isso, usamos "Instâncias Nomeadas":
+1. O provedor cola uma etiqueta: `fx.ResultTags("name:\"createTaskUC\"")`.
+2. O consumidor exige a etiqueta: `fx.ParamTags("name:\"createTaskUC\"")`.
+
+**d) Registro Dinâmico de Rotas (Value Groups)**
+Não registramos rotas uma por uma no arquivo do servidor. Os Handlers de rota usam a função `router.AsRoute(...)`, que embala o resource com a anotação `fx.ResultTags("group:\"routes\"")`. 
+Essa instrução não dá um nome para o objeto, mas sim o joga dentro de uma "caixa" (array/slice) chamada `"routes"`. 
+Lá no Módulo de Servidor (`server.go`), o FX injeta todo o grupo em `Routes []router.RouteRegister` e o servidor simplesmente itera o *array* registrando todos na Huma.API.
+
+**e) Pureza do Core**
+Para manter o `internal/core` isolado, a orquestração do FX para os UseCases não fica na pasta Core. Ela é "terceirizada" e mantida na borda do sistema em `cmd/api/di/usecases.go`.
 
 Nossos Handlers de rota são super limpos, retornando apenas structs tipadas e um `error` (ex: `func(ctx context.Context, input *Input) (*Output, error)`).
 Nós criamos um wrapper chamado `middlewares.HandlerException` que envolve todas as rotas no momento do registro. O seu único trabalho na Resource é: deu erro? Faça `return nil, err`!
@@ -79,6 +105,8 @@ Primeiros Passos
 
     Abra a pasta internal/core/models e analise as regras de negócio do Kanban.
 
-    Veja as rotas em cmd/api/router para entender como as dependências são injetadas.
+    Veja a configuração dos módulos (`var Module = fx.Module(...)`) nas camadas de adapters.
 
-    Observe o internal/adapters/in/http/handlers para ver como o fluxo HTTP é limpo graças ao nosso ExceptionHandler.
+    Observe como o `cmd/api/di` foi criado exclusivamente para não poluir o domínio com a injeção do FX.
+
+    Observe o `internal/adapters/in/http/handlers` para ver como o fluxo HTTP é limpo graças ao nosso ExceptionHandler.
