@@ -11,9 +11,9 @@ de prioridades, auditoria e transições rigorosas de estado.
 Para manter o código limpo e o time alinhado, documentamos nossas decisões técnicas e fundamentos. Se você é novo no
 projeto, comece por aqui:
 
-    [🚀 Guia de Onboarding](./ONBOARDING.md): Leitura obrigatória. Explica os fundamentos de memória do Go (Stack vs Heap) e os padrões específicos de fluxo e injeção de dependências do nosso código.
+[🚀 Guia de Onboarding](./ONBOARDING.md) : Leitura obrigatória. Explica os fundamentos de memória do Go (Stack vs Heap) e os padrões específicos de fluxo e injeção de dependências do nosso código.
 
-    [🏛️ Arquitetura do Projeto](./ARCHITECTURE.md): Detalha nossa estrutura de diretórios Hexagonal, o isolamento absoluto do domínio (Core) e como lidamos com a conversão de DTOs e Entities.
+[🏛️ Arquitetura do Projeto](./ARCHITECTURE.md) : Detalha nossa estrutura de diretórios Hexagonal, o isolamento absoluto do domínio (Core) e como lidamos com a conversão de DTOs e Entities.
 
 ✨ Principais Tecnologias e Padrões
 
