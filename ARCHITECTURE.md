@@ -68,6 +68,12 @@ Utilizamos a biblioteca `uber-go/fx` para o gerenciamento de Injeção de Depend
 - **Wireman do Core na Borda:** Como o Core não se auto-injeta, externalizamos a "receita" de injeção dos UseCases para a camada mais externa do sistema: a pasta `cmd/api/di/usecases.go`.
 - **Registro Dinâmico (Value Groups):** Rotas HTTP não são acopladas ao construtor do servidor web. Handlers exportam suas rotas rotuladas (`fx.ResultTags("group:\"routes\"")`) que são agrupadas dinamicamente via `fx.In` dentro do servidor, permitindo extensibilidade ilimitada sem modificar código antigo.
 
+3.4. Estratégia de Testes e Isolamento (Testify)
+
+Para garantir que a regra de negócio central seja provada sem depender de infraestrutura (banco de dados, rede), focamos amplamente em **Testes de Unidade na Camada de UseCases**.
+Como os UseCases dependem de Interfaces (Ports), nós injetamos Mocks (objetos simulados construídos com a biblioteca `github.com/stretchr/testify/mock`) no lugar de repositórios reais durante a execução dos testes. Isso permite testar todas as ramificações de regras de negócio (Caminho Feliz, Exceptions, etc) em frações de milissegundo, preservando o isolamento defendido pela Arquitetura Hexagonal.
+
+
 4. O Fluxo de uma Requisição
 
 Ao executar um fluxo (ex: Criar Tarefa), a requisição atravessa as camadas da seguinte forma:

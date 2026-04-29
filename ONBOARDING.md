@@ -101,7 +101,41 @@ Nunca criamos tabelas manualmente. Utilizamos a biblioteca golang-migrate/migrat
 O projeto se auto-documenta dinamicamente via Huma. Se você quiser ver quais rotas estão disponíveis e testá-las sem precisar abrir o Postman:
 Acesse: `http://localhost:8080/docs` (garanta que a env `ENABLE_DOCS=true` está configurada no seu `.env`).
 
-Primeiros Passos
+4. Escrevendo Testes de Unidade
+
+A nossa regra de ouro é: **A lógica de negócio deve ser 100% testável de forma rápida e sem depender de infraestrutura externa (banco de dados).**
+
+Utilizamos a biblioteca `testify` para facilitar nossos testes e aplicamos o padrão **AAA (Arrange, Act, Assert)**:
+
+1. **Arrange (Preparação):** Usamos o pacote `testify/mock` para criar "Repositórios Falsos" que obedecem o que o teste mandar. Injetamos esse Mock no UseCase.
+2. **Act (Ação):** Acionamos a função principal do UseCase (ex: `Execute(...)`).
+3. **Assert (Verificação):** Usamos o pacote `testify/assert` para garantir que a resposta está correta e `mock.AssertExpectations` para garantir que o fluxo chamou as funções de banco apenas quando deveria.
+
+**Exemplo Prático (Simulando um erro no Banco de Dados):**
+```go
+func Test_Execute_RepositoryError(t *testing.T) {
+	// ARRANGE
+	mockRepo := new(MockTaskRepository)
+	uc := usecase.NewCreateTaskUC(mockRepo)
+	
+	task := models.NewTask("Título", "Desc", 1)
+	expectedErr := errors.New("banco fora do ar")
+	
+	// Dita a regra: "Quando tentarem Salvar essa task, retorne erro!"
+	mockRepo.On("Save", mock.Anything, task).Return(expectedErr)
+
+	// ACT
+	_, err := uc.Execute(context.Background(), task)
+
+	// ASSERT
+	assert.ErrorIs(t, err, expectedErr) // Garantimos que falhou pelo motivo certo
+	mockRepo.AssertExpectations(t)      // Garantimos que a função Save realmente foi chamada
+}
+```
+
+Sempre cubra o **Caminho Feliz**, os caminhos **Alternativos**, e os de **Lançamento de Exceções** (ex: `BusinessException`).
+
+5. Primeiros Passos
 
     Abra a pasta internal/core/models e analise as regras de negócio do Kanban.
 

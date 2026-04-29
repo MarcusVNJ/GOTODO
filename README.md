@@ -37,6 +37,8 @@ projeto, comece por aqui:
 
     Migrations: golang-migrate/migrate para versionamento do esquema de banco de dados.
 
+    Testes de Unidade: stretchr/testify garantindo o isolamento da regra de negócio via Mocks (Inversão de Dependência).
+
 🚀 Como executar o projeto localmente
 
 1. Pré-requisitos
