@@ -64,3 +64,14 @@ Thumbs.db
 .fleet/
 *.swp
 *.swo
+
+# --- AGENTS AI ---
+.agent/
+# opencode.json is versioned (project config without secrets)
+opencode.local.jsonc
+
+# --- OpenCode (Node internals, keep .opencode/agents/ versioned) ---
+.opencode/node_modules/
+.opencode/package.json
+.opencode/package-lock.json
+.opencode/.gitignore
