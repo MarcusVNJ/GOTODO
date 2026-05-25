@@ -3,9 +3,9 @@ package repository_impl
 import (
 	"context"
 	"errors"
-	"github.com/MarcusVNJ/GOTODO/internal/adapters/out/infrastructure/entity"
-	"github.com/MarcusVNJ/GOTODO/internal/adapters/out/infrastructure/mappers"
-	"github.com/MarcusVNJ/GOTODO/internal/adapters/out/infrastructure/repository/query_builder"
+	"github.com/MarcusVNJ/GOTODO/internal/adapters/out/entity"
+	"github.com/MarcusVNJ/GOTODO/internal/adapters/out/mappers"
+	"github.com/MarcusVNJ/GOTODO/internal/adapters/out/repository/query_builder"
 	"github.com/MarcusVNJ/GOTODO/internal/core/enums"
 	"github.com/MarcusVNJ/GOTODO/internal/core/exceptions"
 	"github.com/MarcusVNJ/GOTODO/internal/core/exceptions/codes"
@@ -21,7 +21,7 @@ type PostgresTaskRepository struct {
 	builder *task_query_builder.TaskQueryBuilder
 }
 
-func NewPostgresTaskRepository(db *pgxpool.Pool) repository.TaskRepository {
+func NewPostgresTaskRepository(db *pgxpool.Pool) ports.TaskRepository {
 	return &PostgresTaskRepository{
 		db:      db,
 		builder: task_query_builder.NewTaskQueryBuilder(),

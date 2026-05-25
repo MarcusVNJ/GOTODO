@@ -2,9 +2,9 @@ package handlers
 
 import (
 	"context"
-
 	"net/http"
 
+	taskdto "github.com/MarcusVNJ/GOTODO/internal/app/task/dto"
 	"github.com/MarcusVNJ/GOTODO/internal/adapters/in/http/dto/request"
 	"github.com/MarcusVNJ/GOTODO/internal/adapters/in/http/dto/response"
 	"github.com/MarcusVNJ/GOTODO/internal/adapters/in/http/middlewares"
@@ -14,17 +14,17 @@ import (
 )
 
 type GetTaskByIdResource struct {
-	usecase usecase.IUsecase[string, *models.Task]
+	usecase usecase.IUsecase[taskdto.GetTaskQuery, *models.Task]
 }
 
-func NewGetTaskByIdResource(usecase usecase.IUsecase[string, *models.Task]) *GetTaskByIdResource {
-	return &GetTaskByIdResource{
-		usecase: usecase,
-	}
+func NewGetTaskByIdResource(uc usecase.IUsecase[taskdto.GetTaskQuery, *models.Task]) *GetTaskByIdResource {
+	return &GetTaskByIdResource{usecase: uc}
 }
 
 func (r *GetTaskByIdResource) Handler(ctx context.Context, input *request.GetTaskRequest) (*response.GetTaskResponse, error) {
-	task, err := r.usecase.Execute(ctx, input.ID)
+	query := taskdto.GetTaskQuery{ID: input.ID}
+
+	task, err := r.usecase.Execute(ctx, query)
 	if err != nil {
 		return nil, err
 	}

@@ -2,31 +2,32 @@ package handlers
 
 import (
 	"context"
-
 	"net/http"
 
+	taskdto "github.com/MarcusVNJ/GOTODO/internal/app/task/dto"
 	"github.com/MarcusVNJ/GOTODO/internal/adapters/in/http/dto/request"
 	"github.com/MarcusVNJ/GOTODO/internal/adapters/in/http/dto/response"
 	"github.com/MarcusVNJ/GOTODO/internal/adapters/in/http/middlewares"
-	"github.com/MarcusVNJ/GOTODO/internal/core/models"
 	"github.com/MarcusVNJ/GOTODO/internal/core/usecase"
 	"github.com/danielgtaylor/huma/v2"
 )
 
 type CreateTaskResource struct {
-	usecase usecase.IUsecase[*models.Task, struct{}]
+	usecase usecase.IUsecase[taskdto.CreateTaskCommand, taskdto.CreateTaskResult]
 }
 
-func NewCreateTaskResource(usecase usecase.IUsecase[*models.Task, struct{}]) *CreateTaskResource {
-	return &CreateTaskResource{
-		usecase: usecase,
-	}
+func NewCreateTaskResource(uc usecase.IUsecase[taskdto.CreateTaskCommand, taskdto.CreateTaskResult]) *CreateTaskResource {
+	return &CreateTaskResource{usecase: uc}
 }
 
 func (r *CreateTaskResource) Handler(ctx context.Context, input *request.CreateTaskRequest) (*response.OperationTaskResponse, error) {
-	task := input.ToModel()
+	cmd := taskdto.CreateTaskCommand{
+		Title:       input.Body.Title,
+		Description: input.Body.Description,
+		Priority:    input.Body.Priority,
+	}
 
-	_, err := r.usecase.Execute(ctx, task)
+	result, err := r.usecase.Execute(ctx, cmd)
 	if err != nil {
 		return nil, err
 	}
@@ -34,7 +35,7 @@ func (r *CreateTaskResource) Handler(ctx context.Context, input *request.CreateT
 	return &response.OperationTaskResponse{
 		Body: response.MessagePayload{
 			Message: "Task criada com sucesso",
-			Id:      task.ID(),
+			Id:      result.ID,
 		},
 	}, nil
 }

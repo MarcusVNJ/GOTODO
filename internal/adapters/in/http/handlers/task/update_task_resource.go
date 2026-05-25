@@ -2,31 +2,34 @@ package handlers
 
 import (
 	"context"
-
 	"net/http"
 
+	taskdto "github.com/MarcusVNJ/GOTODO/internal/app/task/dto"
 	"github.com/MarcusVNJ/GOTODO/internal/adapters/in/http/dto/request"
 	"github.com/MarcusVNJ/GOTODO/internal/adapters/in/http/dto/response"
 	"github.com/MarcusVNJ/GOTODO/internal/adapters/in/http/middlewares"
-	"github.com/MarcusVNJ/GOTODO/internal/core/models"
 	"github.com/MarcusVNJ/GOTODO/internal/core/usecase"
 	"github.com/danielgtaylor/huma/v2"
 )
 
 type UpdateTaskResource struct {
-	usecase usecase.IUsecase[*models.Task, struct{}]
+	usecase usecase.IUsecase[taskdto.UpdateTaskCommand, struct{}]
 }
 
-func NewUpdateTaskResource(usecase usecase.IUsecase[*models.Task, struct{}]) *UpdateTaskResource {
-	return &UpdateTaskResource{
-		usecase: usecase,
-	}
+func NewUpdateTaskResource(uc usecase.IUsecase[taskdto.UpdateTaskCommand, struct{}]) *UpdateTaskResource {
+	return &UpdateTaskResource{usecase: uc}
 }
 
 func (r *UpdateTaskResource) Handler(ctx context.Context, input *request.UpdateTaskRequest) (*response.OperationTaskResponse, error) {
-	task := input.ToModel()
+	cmd := taskdto.UpdateTaskCommand{
+		ID:          input.Body.Id,
+		Title:       input.Body.Title,
+		Description: input.Body.Description,
+		Status:      input.Body.Status,
+		Priority:    input.Body.Priority,
+	}
 
-	_, err := r.usecase.Execute(ctx, task)
+	_, err := r.usecase.Execute(ctx, cmd)
 	if err != nil {
 		return nil, err
 	}

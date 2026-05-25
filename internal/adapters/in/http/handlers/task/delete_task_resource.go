@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"context"
-
 	"net/http"
 
 	"github.com/MarcusVNJ/GOTODO/internal/adapters/in/http/dto/request"
@@ -18,19 +17,16 @@ type DeleteTaskResource struct {
 	usecase usecase.IUsecase[string, struct{}]
 }
 
-func NewDeleteTaskResource(usecase usecase.IUsecase[string, struct{}]) *DeleteTaskResource {
-	return &DeleteTaskResource{
-		usecase: usecase,
-	}
+func NewDeleteTaskResource(uc usecase.IUsecase[string, struct{}]) *DeleteTaskResource {
+	return &DeleteTaskResource{usecase: uc}
 }
 
 func (r *DeleteTaskResource) Handler(ctx context.Context, input *request.DeleteTaskRequest) (*response.OperationTaskResponse, error) {
-	err := validateId(input.ID)
-	if err != nil {
+	if err := validateId(input.ID); err != nil {
 		return nil, err
 	}
 
-	_, err = r.usecase.Execute(ctx, input.ID)
+	_, err := r.usecase.Execute(ctx, input.ID)
 	if err != nil {
 		return nil, err
 	}

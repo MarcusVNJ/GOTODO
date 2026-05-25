@@ -4,7 +4,7 @@ import (
 	"github.com/MarcusVNJ/GOTODO/cmd/api/di"
 	taskHandlers "github.com/MarcusVNJ/GOTODO/internal/adapters/in/http/handlers/task"
 	"github.com/MarcusVNJ/GOTODO/internal/adapters/in/http/server"
-	repository_impl "github.com/MarcusVNJ/GOTODO/internal/adapters/out/infrastructure/repository"
+	repository_impl "github.com/MarcusVNJ/GOTODO/internal/adapters/out/repository"
 	"github.com/MarcusVNJ/GOTODO/internal/config"
 
 	_ "github.com/lib/pq"

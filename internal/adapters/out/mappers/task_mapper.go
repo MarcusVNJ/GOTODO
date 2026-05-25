@@ -1,7 +1,7 @@
 package mappers
 
 import (
-	"github.com/MarcusVNJ/GOTODO/internal/adapters/out/infrastructure/entity"
+	"github.com/MarcusVNJ/GOTODO/internal/adapters/out/entity"
 	"github.com/MarcusVNJ/GOTODO/internal/core/models"
 )
 

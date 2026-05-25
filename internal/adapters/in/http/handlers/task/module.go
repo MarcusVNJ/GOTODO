@@ -11,5 +11,6 @@ var Module = fx.Module("task_handlers",
 		router.AsRoute(NewDeleteTaskResource, fx.ParamTags(`name:"deleteTaskUC"`)),
 		router.AsRoute(NewGetTaskByIdResource, fx.ParamTags(`name:"getTaskByIdUC"`)),
 		router.AsRoute(NewUpdateTaskResource, fx.ParamTags(`name:"updateTaskUC"`)),
+		router.AsRoute(NewListTaskResource, fx.ParamTags(`name:"getAllTasksUC"`)),
 	),
 )

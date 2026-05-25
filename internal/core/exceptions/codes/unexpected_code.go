@@ -1,7 +1,5 @@
 package codes
 
-import "net/http"
-
 type UnexpectedCode int
 
 const (
@@ -22,5 +20,5 @@ func (code UnexpectedCode) Message() string {
 }
 
 func (code UnexpectedCode) HTTPStatus() int {
-	return http.StatusInternalServerError
+	return 500
 }

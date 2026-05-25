@@ -1,7 +1,7 @@
 package repository_impl
 
 import (
-	repository "github.com/MarcusVNJ/GOTODO/internal/core/ports"
+	"github.com/MarcusVNJ/GOTODO/internal/core/ports"
 	"go.uber.org/fx"
 )
 
@@ -9,7 +9,7 @@ var Module = fx.Module("repositories",
 	fx.Provide(
 		fx.Annotate(
 			NewPostgresTaskRepository,
-			fx.As(new(repository.TaskRepository)),
+			fx.As(new(ports.TaskRepository)),
 		),
 	),
 )

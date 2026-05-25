@@ -1,7 +1,5 @@
 package codes
 
-import "net/http"
-
 type BadRequestCode int
 
 const (
@@ -42,10 +40,10 @@ func (code BadRequestCode) Message() string {
 func (code BadRequestCode) HTTPStatus() int {
 	switch code {
 	case UnprocessableEntity:
-		return http.StatusUnprocessableEntity
+		return 422
 	case TaskNotFound:
-		return http.StatusNotFound
+		return 404
 	default:
-		return http.StatusBadRequest
+		return 400
 	}
 }

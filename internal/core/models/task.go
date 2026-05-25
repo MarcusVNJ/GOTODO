@@ -14,7 +14,7 @@ type Task struct {
 	priority    int
 }
 
-func NewTaskWithoutAudit(title, description string, priority int) *Task {
+func NewTaskWithoutAudit(title, description string, priority int) (*Task, error) {
 	task := &Task{
 		title:       title,
 		description: description,
@@ -23,26 +23,26 @@ func NewTaskWithoutAudit(title, description string, priority int) *Task {
 	}
 
 	if err := task.validade(); err != nil {
-		return nil
+		return nil, err
 	}
 
-	return task
+	return task, nil
 }
 
-func NewTask(title, description string, priority int) *Task {
-	task := new(Task{
+func NewTask(title, description string, priority int) (*Task, error) {
+	task := &Task{
 		Audit:       NewAudit(),
 		title:       title,
 		description: description,
 		priority:    priority,
 		status:      enums.Pending,
-	})
-
-	if err := task.validade(); err != nil {
-		return nil
 	}
 
-	return task
+	if err := task.validade(); err != nil {
+		return nil, err
+	}
+
+	return task, nil
 }
 
 func NewTaskInit(audit Audit, title, desc string, status enums.Status, priority int) *Task {

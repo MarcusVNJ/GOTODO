@@ -1,9 +1,5 @@
 package exceptions
 
-import (
-	"net/http"
-)
-
 type UnexpectedException struct {
 	Code    int    `json:"code"`
 	Message string `json:"message"`
@@ -13,7 +9,7 @@ type UnexpectedException struct {
 func NewUnexpectedException(err Exception, details error) *UnexpectedException {
 	code := err.HTTPStatus()
 	if code == 0 {
-		code = http.StatusInternalServerError
+		code = 500
 	}
 
 	return &UnexpectedException{

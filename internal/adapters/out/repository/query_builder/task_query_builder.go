@@ -1,7 +1,7 @@
 package task_query_builder
 
 import (
-	"github.com/MarcusVNJ/GOTODO/internal/adapters/out/infrastructure/entity"
+	"github.com/MarcusVNJ/GOTODO/internal/adapters/out/entity"
 	"github.com/MarcusVNJ/GOTODO/internal/core/enums"
 	sq "github.com/Masterminds/squirrel"
 	"time"
@@ -37,6 +37,7 @@ func (query_builder *TaskQueryBuilder) QueryExistsById(id string) (string, []any
 		Select("1").
 		From("tasks").
 		Where(sq.Eq{"id": id}).
+		Where(sq.Eq{"deleted_at": nil}).
 		Limit(1).
 		ToSql()
 }
@@ -50,6 +51,8 @@ func (query_builder *TaskQueryBuilder) QueryFindById(id string) (string, []any, 
 
 func (query_builder *TaskQueryBuilder) QueryFindAllTasks(statusFilter string, minPriority int) (string, []any, error) {
 	queryBuilder := query_builder.psql.Select("*").From("tasks")
+
+	queryBuilder.Where(sq.Eq{"deleted_at": nil})
 
 	if statusFilter != "" {
 		queryBuilder.Where(sq.Eq{"status": statusFilter})

@@ -36,7 +36,7 @@ A separação de responsabilidades reflete rigorosamente nossa árvore de diret�
 
         in/http/: Adaptadores primários (Handlers/Resources, DTOs de request/response e Middlewares).
 
-        out/infrastructure/: Adaptadores secundários. Contém entity (modelos exclusivos de DB), mappers (tradutores de Domain <-> Entity), query_builder (geradores de SQL) e implementações do repositório PostgreSQL.
+        out/: Adaptadores secundários. Contém entity (modelos exclusivos de DB), mappers (tradutores de Domain <-> Entity), query_builder (geradores de SQL) e implementações do repositório PostgreSQL.
 
     migrations/: Scripts SQL puros (Up/Down) processados pelo golang-migrate, mantidos na raiz para garantir que a infraestrutura de banco de dados não polua o código interno.
 
@@ -57,13 +57,13 @@ Para proteger o encapsulamento, utilizamos modelos diferentes para cada fase da 
 
     Domain (core/models): Usado para a lógica de negócio pura. Não possui tags de serialização (json ou db).
 
-    Entity (adapters/out/infrastructure/entity): Usado pelo repositório e pelo query_builder para espelhar as tabelas do banco de dados (contendo tags db). A conversão ocorre no pacote mappers.
+    Entity (adapters/out/entity): Usado pelo repositório e pelo query_builder para espelhar as tabelas do banco de dados (contendo tags db). A conversão ocorre no pacote mappers.
 
 3.3. Injeção de Dependência Descentralizada (uber-go/fx)
 
 Utilizamos a biblioteca `uber-go/fx` para o gerenciamento de Injeção de Dependências. Para respeitar as fronteiras arquiteturais (Clean Architecture), aplicamos os seguintes padrões:
 
-- **Módulos Descentralizados nos Adaptadores:** Cada pacote de infraestrutura ou adaptador (ex: `internal/adapters/out/infrastructure/repository`, `internal/adapters/in/http/server`) exporta o seu próprio `fx.Module`. Isso torna os adaptadores totalmente *Plug-and-Play* e auto-contidos. O adaptador sabe do que precisa para ser construído e sabe o que provê para o contêiner.
+- **Módulos Descentralizados nos Adaptadores:** Cada pacote de infraestrutura ou adaptador (ex: `internal/adapters/out/repository`, `internal/adapters/in/http/server`) exporta o seu próprio `fx.Module`. Isso torna os adaptadores totalmente *Plug-and-Play* e auto-contidos. O adaptador sabe do que precisa para ser construído e sabe o que provê para o contêiner.
 - **Pureza Absoluta do Core:** O `internal/core` é imaculado. Ele **não importa** e não conhece a existência da biblioteca `go.uber.org/fx`.
 - **Wireman do Core na Borda:** Como o Core não se auto-injeta, externalizamos a "receita" de injeção dos UseCases para a camada mais externa do sistema: a pasta `cmd/api/di/usecases.go`.
 - **Registro Dinâmico (Value Groups):** Rotas HTTP não são acopladas ao construtor do servidor web. Handlers exportam suas rotas rotuladas (`fx.ResultTags("group:\"routes\"")`) que são agrupadas dinamicamente via `fx.In` dentro do servidor, permitindo extensibilidade ilimitada sem modificar código antigo.

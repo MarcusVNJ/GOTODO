@@ -1,11 +1,6 @@
 package request
 
-import (
-	"time"
-
-	"github.com/MarcusVNJ/GOTODO/internal/core/enums"
-	"github.com/MarcusVNJ/GOTODO/internal/core/models"
-)
+import "github.com/MarcusVNJ/GOTODO/internal/core/enums"
 
 type updateTaskPayload struct {
 	Id          string       `json:"id" minLength:"1" description:"ID da task" example:"1234"`
@@ -17,17 +12,4 @@ type updateTaskPayload struct {
 
 type UpdateTaskRequest struct {
 	Body updateTaskPayload
-}
-
-func (dto UpdateTaskRequest) ToModel() *models.Task {
-
-	audit := models.NewAuditInit(dto.Body.Id, time.Time{}, time.Now().UTC(), nil)
-
-	return models.NewTaskInit(
-		audit,
-		dto.Body.Title,
-		dto.Body.Description,
-		dto.Body.Status,
-		dto.Body.Priority,
-	)
 }
