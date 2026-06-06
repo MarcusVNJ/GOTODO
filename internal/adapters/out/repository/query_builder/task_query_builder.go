@@ -46,6 +46,7 @@ func (query_builder *TaskQueryBuilder) QueryFindById(id string) (string, []any, 
 	return query_builder.psql.Select("*").
 		From("tasks").
 		Where(sq.Eq{"id": id}).
+		Where(sq.Eq{"deleted_at": nil}).
 		ToSql()
 }
 
@@ -89,5 +90,6 @@ func (query_builder *TaskQueryBuilder) QueryFindByStatus(status enums.Status) (s
 	return query_builder.psql.Select("*").
 		From("tasks").
 		Where(sq.Eq{"status": status}).
+		Where(sq.Eq{"deleted_at": nil}).
 		ToSql()
 }

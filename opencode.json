@@ -1,0 +1,67 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "anthropic/claude-sonnet-4-20250514",
+  "small_model": "anthropic/claude-haiku-4-20250514",
+  "default_agent": "build",
+  "instructions": ["AGENTS.md"],
+  "agent": {
+    "planner": {
+      "description": "Gera planos de tarefas a partir de histórias de usuário e bugs, seguindo Arquitetura Hexagonal",
+      "mode": "primary",
+      "temperature": 0.1,
+      "prompt": "{file:./.agent/agents/planner.md}",
+      "permission": {
+        "edit": "allow",
+        "bash": "ask",
+        "task": "allow"
+      }
+    },
+    "knowledge-base-creator": {
+      "description": "Analisa o projeto e gera toda a base de conhecimento em .agent/knowledge-base/",
+      "mode": "primary",
+      "temperature": 0.1,
+      "prompt": "{file:./.agent/agents/knowledge-base-creator.md}",
+      "permission": {
+        "edit": "allow",
+        "bash": "ask",
+        "task": "allow"
+      }
+    },
+    "software-engineer": {
+      "description": "Implementa tarefas do Planner seguindo Arquitetura Hexagonal e bases de conhecimento",
+      "mode": "primary",
+      "temperature": 0.2,
+      "prompt": "{file:./.agent/agents/software-engineer.md}",
+      "permission": {
+        "edit": "allow",
+        "bash": "allow",
+        "task": "allow"
+      }
+    },
+    "test-engineer": {
+      "description": "Cria e mantém testes de unidade focados em regras de negócio",
+      "mode": "primary",
+      "temperature": 0.1,
+      "prompt": "{file:./.agent/agents/test-engineer.md}",
+      "permission": {
+        "edit": "allow",
+        "bash": "allow",
+        "task": "allow"
+      }
+    },
+    "doc-updater": {
+      "description": "Atualiza as bases de conhecimento após mudanças no código",
+      "mode": "primary",
+      "temperature": 0.1,
+      "prompt": "{file:./.agent/agents/doc-updater.md}",
+      "permission": {
+        "edit": "allow",
+        "bash": "allow",
+        "task": "allow"
+      }
+    }
+  },
+  "watcher": {
+    "ignore": [".agent/**", "node_modules/**"]
+  }
+}

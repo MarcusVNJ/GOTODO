@@ -22,7 +22,7 @@ func NewTaskWithoutAudit(title, description string, priority int) (*Task, error)
 		status:      enums.Pending,
 	}
 
-	if err := task.validade(); err != nil {
+	if err := task.validate(); err != nil {
 		return nil, err
 	}
 
@@ -38,7 +38,7 @@ func NewTask(title, description string, priority int) (*Task, error) {
 		status:      enums.Pending,
 	}
 
-	if err := task.validade(); err != nil {
+	if err := task.validate(); err != nil {
 		return nil, err
 	}
 
@@ -55,7 +55,7 @@ func NewTaskInit(audit Audit, title, desc string, status enums.Status, priority 
 	})
 }
 
-func (task *Task) validade() error {
+func (task *Task) validate() error {
 	if err := task.validateTitle(); err != nil {
 		return err
 	}

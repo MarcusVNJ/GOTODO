@@ -1,0 +1,65 @@
+version: "2"
+
+run:
+  timeout: 3m
+  tests: true
+  modules-download-mode: readonly
+  allow-parallel-runners: true
+
+linters:
+  default: none
+  enable:
+    - errcheck
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    - gosimple
+    - revive
+    - copyloopvar
+    - misspell
+    - unconvert
+    - unparam
+    - whitespace
+    - gofmt
+    - goimports
+
+linters-settings:
+  revive:
+    rules:
+      - name: exported
+        arguments:
+          - disableStutteringCheck
+      - name: blank-imports
+      - name: context-as-argument
+      - name: context-keys-type
+      - name: dot-imports
+      - name: error-return
+      - name: error-strings
+      - name: error-naming
+      - name: if-return
+      - name: increment-decrement
+      - name: var-naming
+      - name: var-declaration
+      - name: range
+      - name: receiver-naming
+      - name: time-naming
+      - name: empty-block
+      - name: superfluous-else
+      - name: indent-error-flow
+      - name: unused-parameter
+      - name: unreachable-code
+      - name: redefines-builtin-id
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/MarcusVNJ/GOTODO
+  exclusions:
+    paths:
+      - vendor
+      - .git
