@@ -9,7 +9,6 @@
 # Binários Unix/Mac (Geralmente não têm extensão)
 # Substitua "meu-app" pelo nome do executável que você gera no go build
 main
-server
 app
 bin/
 dist/
