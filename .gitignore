@@ -65,8 +65,8 @@ Thumbs.db
 *.swo
 
 # --- AGENTS AI ---
-.agent/
-# opencode.json is versioned (project config without secrets)
+# .agent/
+# # opencode.json is versioned (project config without secrets)
 opencode.local.jsonc
 
 # --- OpenCode (Node internals, keep .opencode/agents/ versioned) ---

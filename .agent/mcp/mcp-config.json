@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "gotodo-db": {
+      "command": "go",
+      "args": ["run", ".agent/mcp/db_schema_server.go"],
+      "env": {
+        "DB_HOST": "localhost",
+        "DB_PORT": "5432",
+        "DB_USER": "postgres",
+        "DB_PASSWORD": "root",
+        "DB_NAME": "todo_db",
+        "DB_SSLMODE": "disable"
+      }
+    }
+  }
+}
